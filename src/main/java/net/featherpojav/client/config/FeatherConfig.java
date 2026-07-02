@@ -21,20 +21,20 @@ public class FeatherConfig {
     public boolean directionHUD = true;
     public boolean coordHUD = true;
     public boolean fpsHUD = true;
-    public boolean comboDisplay = false;
-    public boolean pingDisplay = false;
-    public boolean playtime = false;
-    public boolean reachDisplay = false;
-    public boolean serverAddress = false;
-    public boolean speedMeter = false;
-    public boolean stopwatch = false;
-    public boolean itemCounter = false;
-    public boolean armorBar = false;
-    public boolean armorStatus = false;
-    public boolean bossBar = false;
-    public boolean hearts = false;
-    public boolean packDisplay = false;
-    public boolean scoreboard = false;
+    public boolean comboDisplay = true;
+    public boolean pingDisplay = true;
+    public boolean playtime = true;
+    public boolean reachDisplay = true;
+    public boolean serverAddress = true;
+    public boolean speedMeter = true;
+    public boolean stopwatch = true;
+    public boolean itemCounter = true;
+    public boolean armorBar = true;
+    public boolean armorStatus = true;
+    public boolean bossBar = true;
+    public boolean hearts = true;
+    public boolean packDisplay = true;
+    public boolean scoreboard = true;
 
     // Category: Gameplay
     public boolean autoText = false;

@@ -1,5 +1,6 @@
 package net.featherpojav.client;
 
+import java.io.File;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -36,6 +37,23 @@ public class FeatherPojavModClient implements ClientModInitializer {
     public void onInitializeClient() {
         // Load configurations
         FeatherConfig.load();
+
+        // Cull Logs on Startup
+        if (FeatherConfig.INSTANCE.cullLogs) {
+            try {
+                File logsDir = new File(MinecraftClient.getInstance().runDirectory, "logs");
+                if (logsDir.exists() && logsDir.isDirectory()) {
+                    File[] files = logsDir.listFiles();
+                    if (files != null) {
+                        for (File file : files) {
+                            if (file.getName().endsWith(".log") || file.getName().endsWith(".log.gz")) {
+                                file.delete();
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
 
         // Keybindings Registration
         openSettingsKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -90,6 +108,11 @@ public class FeatherPojavModClient implements ClientModInitializer {
         // Client tick event handling
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
+
+            // Handle Hitbox outlines toggle in real-time
+            if (client.getEntityRenderDispatcher() != null) {
+                client.getEntityRenderDispatcher().setRenderHitboxes(FeatherConfig.INSTANCE.hitbox);
+            }
 
             // Handle Menu keybind
             if (openSettingsKey.wasPressed()) {

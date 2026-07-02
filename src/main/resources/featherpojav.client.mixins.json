@@ -10,7 +10,9 @@
 		"ItemEntityRendererMixin",
 		"MouseMixin",
 		"CameraMixin",
-		"WorldMixin"
+		"WorldMixin",
+		"SessionMixin",
+		"BossBarHudMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

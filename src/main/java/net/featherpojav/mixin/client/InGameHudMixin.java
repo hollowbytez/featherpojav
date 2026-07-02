@@ -4,8 +4,8 @@ import net.featherpojav.client.config.FeatherConfig;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.scoreboard.ScoreboardObjective;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -37,6 +37,13 @@ public class InGameHudMixin {
             // Bottom vertical line
             context.fill((int) (cx - th / 2.0f), (int) (cy + gap), (int) (cx + th / 2.0f + 0.5f), (int) (cy + gap + size), color);
             
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderScoreboardSidebar", at = @At("HEAD"), cancellable = true)
+    private void onRenderScoreboardSidebar(DrawContext context, ScoreboardObjective objective, CallbackInfo ci) {
+        if (!FeatherConfig.INSTANCE.scoreboard) {
             ci.cancel();
         }
     }
