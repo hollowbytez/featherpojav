@@ -22,6 +22,7 @@ public class FeatherPojavModClient implements ClientModInitializer {
     public static KeyBinding zoomKey;
     public static KeyBinding freelookKey;
     public static KeyBinding stopwatchKey;
+    public static double originalGamma = -1.0;
 
     // Zoom state
     public static boolean isZooming = false;
@@ -154,10 +155,14 @@ public class FeatherPojavModClient implements ClientModInitializer {
             // Handle Fullbright status (gamma option override)
             if (client.options != null && client.options.getGamma() != null) {
                 if (FeatherConfig.INSTANCE.fullbright) {
+                    if (originalGamma == -1.0) {
+                        originalGamma = client.options.getGamma().getValue();
+                    }
                     client.options.getGamma().setValue(15.0);
                 } else {
-                    if (client.options.getGamma().getValue() > 1.0) {
-                        client.options.getGamma().setValue(1.0);
+                    if (originalGamma != -1.0) {
+                        client.options.getGamma().setValue(originalGamma);
+                        originalGamma = -1.0;
                     }
                 }
             }

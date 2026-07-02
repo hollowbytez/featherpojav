@@ -1,168 +1,154 @@
 package net.featherpojav.client.gui;
 
 import net.featherpojav.client.config.FeatherConfig;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
+import net.minecraft.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FeatherSettingsScreen extends Screen {
     private final Screen parent;
-    private Category currentCategory = Category.HUD;
-    private final List<ToggleOption> options = new ArrayList<>();
+    private Category currentCategory = Category.ALL;
+    private final List<ModCard> cards = new ArrayList<>();
     
-    // Sidebar geometry
-    private final int sidebarWidth = 100;
+    // Geometry
+    private int boxWidth = 420;
+    private int boxHeight = 250;
+    private int boxX = 0;
+    private int boxY = 0;
     
     // Scroll state
     private double scrollY = 0;
     
     public FeatherSettingsScreen(Screen parent) {
-        super(Text.of("Feather Settings"));
+        super(Text.of("Feather Mod Menu"));
         this.parent = parent;
     }
     
     enum Category {
-        HUD("HUD Mods"),
-        GAMEPLAY("Gameplay"),
-        PERFORMANCE("Performance"),
-        COSMETICS("Cosmetics");
+        ALL("All"),
+        PVP("PvP"),
+        HUD("HUD"),
+        NEW("New");
         
         final String name;
         Category(String name) { this.name = name; }
     }
     
-    private static class ToggleOption {
+    private static class ModCard {
         String name;
-        String desc;
+        String icon;
         java.util.function.BooleanSupplier getter;
         java.util.function.Consumer<Boolean> setter;
         Category category;
+        Runnable onConfigure;
 
-        ToggleOption(String name, String desc, Category category, java.util.function.BooleanSupplier getter, java.util.function.Consumer<Boolean> setter) {
+        ModCard(String name, String icon, Category category, java.util.function.BooleanSupplier getter, java.util.function.Consumer<Boolean> setter) {
             this.name = name;
-            this.desc = desc;
+            this.icon = icon;
             this.category = category;
             this.getter = getter;
             this.setter = setter;
+        }
+
+        ModCard withConfig(Runnable onConfigure) {
+            this.onConfigure = onConfigure;
+            return this;
         }
     }
     
     @Override
     protected void init() {
-        options.clear();
+        boxWidth = Math.min(420, this.width - 20);
+        boxHeight = Math.min(250, this.height - 20);
+        boxX = this.width / 2 - boxWidth / 2;
+        boxY = this.height / 2 - boxHeight / 2;
+
+        cards.clear();
         FeatherConfig cfg = FeatherConfig.INSTANCE;
         
-        // --- Category: HUD ---
-        options.add(new ToggleOption("Keystrokes", "Shows WASD and CPS clicks on screen", Category.HUD, () -> cfg.keystrokes, (v) -> cfg.keystrokes = v));
-        options.add(new ToggleOption("Armor HUD", "Displays equipped armor and durability", Category.HUD, () -> cfg.armorHUD, (v) -> cfg.armorHUD = v));
-        options.add(new ToggleOption("Potion HUD", "Displays active status effects", Category.HUD, () -> cfg.potionHUD, (v) -> cfg.potionHUD = v));
-        options.add(new ToggleOption("Coordinates HUD", "Displays current coordinates and direction", Category.HUD, () -> cfg.coordHUD, (v) -> cfg.coordHUD = v));
-        options.add(new ToggleOption("Direction HUD", "Displays a compass bar at the top", Category.HUD, () -> cfg.directionHUD, (v) -> cfg.directionHUD = v));
-        options.add(new ToggleOption("FPS HUD", "Displays your current Frames Per Second", Category.HUD, () -> cfg.fpsHUD, (v) -> cfg.fpsHUD = v));
-        options.add(new ToggleOption("Combo Display", "Tracks PvP combo melee hits in real time", Category.HUD, () -> cfg.comboDisplay, (v) -> cfg.comboDisplay = v));
-        options.add(new ToggleOption("Ping Display", "Tracks latency relative to the server", Category.HUD, () -> cfg.pingDisplay, (v) -> cfg.pingDisplay = v));
-        options.add(new ToggleOption("Playtime", "Displays session and cumulative playtime", Category.HUD, () -> cfg.playtime, (v) -> cfg.playtime = v));
-        options.add(new ToggleOption("Reach Display", "Measures block-distance of PvP hits", Category.HUD, () -> cfg.reachDisplay, (v) -> cfg.reachDisplay = v));
-        options.add(new ToggleOption("Server Address", "Displays the server IP or address", Category.HUD, () -> cfg.serverAddress, (v) -> cfg.serverAddress = v));
-        options.add(new ToggleOption("Speed Meter", "Measures horizontal and vertical velocity", Category.HUD, () -> cfg.speedMeter, (v) -> cfg.speedMeter = v));
-        options.add(new ToggleOption("Stopwatch", "Start, freeze, and clear run timers", Category.HUD, () -> cfg.stopwatch, (v) -> cfg.stopwatch = v));
-        options.add(new ToggleOption("Item Counter", "Counts held inventory item count dynamically", Category.HUD, () -> cfg.itemCounter, (v) -> cfg.itemCounter = v));
-        options.add(new ToggleOption("Armor Bar", "Adds extra visual metrics to hotbar", Category.HUD, () -> cfg.armorBar, (v) -> cfg.armorBar = v));
-        options.add(new ToggleOption("Armor Status", "Shows durability stats on active items", Category.HUD, () -> cfg.armorStatus, (v) -> cfg.armorStatus = v));
-        options.add(new ToggleOption("Boss Bar", "Lets you scale, recolor, or position boss bars", Category.HUD, () -> cfg.bossBar, (v) -> cfg.bossBar = v));
-        options.add(new ToggleOption("Hearts Multiplier", "Replaces stacked hearts with a numeric counter", Category.HUD, () -> cfg.hearts, (v) -> cfg.hearts = v));
-        options.add(new ToggleOption("Pack Display", "Shows loaded resource pack thumbnail/name", Category.HUD, () -> cfg.packDisplay, (v) -> cfg.packDisplay = v));
-        options.add(new ToggleOption("Scoreboard", "Scaling and visual options for scoreboard", Category.HUD, () -> cfg.scoreboard, (v) -> cfg.scoreboard = v));
+        // --- HUD Category ---
+        cards.add(new ModCard("Keystrokes", "⌨", Category.HUD, () -> cfg.keystrokes, (v) -> cfg.keystrokes = v));
+        cards.add(new ModCard("Armor HUD", "🛡", Category.HUD, () -> cfg.armorHUD, (v) -> cfg.armorHUD = v));
+        cards.add(new ModCard("Potion HUD", "🧪", Category.HUD, () -> cfg.potionHUD, (v) -> cfg.potionHUD = v));
+        cards.add(new ModCard("Coordinates", "📍", Category.HUD, () -> cfg.coordHUD, (v) -> cfg.coordHUD = v));
+        cards.add(new ModCard("Direction HUD", "🧭", Category.HUD, () -> cfg.directionHUD, (v) -> cfg.directionHUD = v));
+        cards.add(new ModCard("FPS HUD", "📊", Category.HUD, () -> cfg.fpsHUD, (v) -> cfg.fpsHUD = v));
+        cards.add(new ModCard("Combo Display", "⚔", Category.HUD, () -> cfg.comboDisplay, (v) -> cfg.comboDisplay = v));
+        cards.add(new ModCard("Ping Display", "📶", Category.HUD, () -> cfg.pingDisplay, (v) -> cfg.pingDisplay = v));
+        cards.add(new ModCard("Playtime", "⏳", Category.HUD, () -> cfg.playtime, (v) -> cfg.playtime = v));
+        cards.add(new ModCard("Reach Display", "📏", Category.HUD, () -> cfg.reachDisplay, (v) -> cfg.reachDisplay = v));
+        cards.add(new ModCard("Server IP", "🌐", Category.HUD, () -> cfg.serverAddress, (v) -> cfg.serverAddress = v));
+        cards.add(new ModCard("Speed Meter", "👟", Category.HUD, () -> cfg.speedMeter, (v) -> cfg.speedMeter = v));
+        cards.add(new ModCard("Stopwatch", "⏱", Category.HUD, () -> cfg.stopwatch, (v) -> cfg.stopwatch = v));
+        cards.add(new ModCard("Item Counter", "📦", Category.HUD, () -> cfg.itemCounter, (v) -> cfg.itemCounter = v));
+        cards.add(new ModCard("Armor Bar", "🛡", Category.HUD, () -> cfg.armorBar, (v) -> cfg.armorBar = v));
+        cards.add(new ModCard("Armor Status", "🛡", Category.HUD, () -> cfg.armorStatus, (v) -> cfg.armorStatus = v));
+        cards.add(new ModCard("Boss Bar", "👿", Category.HUD, () -> cfg.bossBar, (v) -> cfg.bossBar = v));
+        cards.add(new ModCard("Hearts", "❤", Category.HUD, () -> cfg.hearts, (v) -> cfg.hearts = v));
+        cards.add(new ModCard("Pack Display", "🗂", Category.HUD, () -> cfg.packDisplay, (v) -> cfg.packDisplay = v));
+        cards.add(new ModCard("Scoreboard", "📋", Category.HUD, () -> cfg.scoreboard, (v) -> cfg.scoreboard = v));
 
-        // --- Category: GAMEPLAY ---
-        options.add(new ToggleOption("Auto Text", "Macro tool to assign commands to quick hotkeys", Category.GAMEPLAY, () -> cfg.autoText, (v) -> cfg.autoText = v));
-        options.add(new ToggleOption("Auto Perspective", "Switches camera POV depending on actions", Category.GAMEPLAY, () -> cfg.autoPerspective, (v) -> cfg.autoPerspective = v));
-        options.add(new ToggleOption("Block Indicator", "Overlays context info about target block face", Category.GAMEPLAY, () -> cfg.blockIndicator, (v) -> cfg.blockIndicator = v));
-        options.add(new ToggleOption("Custom Advancements", "Replaces advancement pane with a grid layout", Category.GAMEPLAY, () -> cfg.customAdvancements, (v) -> cfg.customAdvancements = v));
-        options.add(new ToggleOption("Custom Chat", "Toggles chat shadows and unlimited scroll history", Category.GAMEPLAY, () -> cfg.customChat, (v) -> cfg.customChat = v));
-        options.add(new ToggleOption("Death Info", "Logs exact coordinate points upon dying", Category.GAMEPLAY, () -> cfg.deathInfo, (v) -> cfg.deathInfo = v));
-        options.add(new ToggleOption("Drop Prevention", "Locks hotbar items to prevent accidental drops", Category.GAMEPLAY, () -> cfg.dropPrevention, (v) -> cfg.dropPrevention = v));
-        options.add(new ToggleOption("Elytras", "Utility flight indicators and armor swapping", Category.GAMEPLAY, () -> cfg.elytras, (v) -> cfg.elytras = v));
-        options.add(new ToggleOption("FOV Changer", "Adjusts dynamic FOV sprint/speed distortions", Category.GAMEPLAY, () -> cfg.fovChanger, (v) -> cfg.fovChanger = v));
-        options.add(new ToggleOption("Hit Indicator", "Spawns red indicators showing source of damage", Category.GAMEPLAY, () -> cfg.hitIndicator, (v) -> cfg.hitIndicator = v));
-        options.add(new ToggleOption("Horses", "Overlays statistics directly above horses", Category.GAMEPLAY, () -> cfg.horses, (v) -> cfg.horses = v));
-        options.add(new ToggleOption("Hypixel Utilities", "AutoGG, AutoTip, and stats tracking for Hypixel", Category.GAMEPLAY, () -> cfg.hypixelUtilities, (v) -> cfg.hypixelUtilities = v));
-        options.add(new ToggleOption("Inventory Management", "Quick sorting and fast-transfer inventory tweaks", Category.GAMEPLAY, () -> cfg.inventoryManagement, (v) -> cfg.inventoryManagement = v));
-        options.add(new ToggleOption("Item Info", "Visual pop-up of item enchantments on pickup", Category.GAMEPLAY, () -> cfg.itemInfo, (v) -> cfg.itemInfo = v));
-        options.add(new ToggleOption("Jump Reset", "PvP feedback tracker for jump reset timing", Category.GAMEPLAY, () -> cfg.jumpReset, (v) -> cfg.jumpReset = v));
-        options.add(new ToggleOption("Auto Reconnect", "Loops login attempts on server disconnects", Category.GAMEPLAY, () -> cfg.reconnect, (v) -> cfg.reconnect = v));
-        options.add(new ToggleOption("Saturation Tooltips", "Extends tooltips with food saturation metrics", Category.GAMEPLAY, () -> cfg.saturation, (v) -> cfg.saturation = v));
-        options.add(new ToggleOption("Screenshot Utility", "Enables clipboard copying and quick uploading", Category.GAMEPLAY, () -> cfg.screenshotUtility, (v) -> cfg.screenshotUtility = v));
-        options.add(new ToggleOption("Search Keybinds", "Search overlay to look up keybind maps", Category.GAMEPLAY, () -> cfg.searchKeybind, (v) -> cfg.searchKeybind = v));
-        options.add(new ToggleOption("Snaplook", "Toggle keybind to instantly snap third-person view", Category.GAMEPLAY, () -> cfg.snaplook, (v) -> cfg.snaplook = v));
-        options.add(new ToggleOption("ToggleSprint", "Automatically keep sprinting", Category.GAMEPLAY, () -> cfg.toggleSprint, (v) -> cfg.toggleSprint = v));
-        options.add(new ToggleOption("Zoom", "OptiFine-style zoom using customizable keybind", Category.GAMEPLAY, () -> cfg.zoom, (v) -> cfg.zoom = v));
-        options.add(new ToggleOption("Perspective (Freelook)", "Decouples camera movement from player rotation", Category.GAMEPLAY, () -> cfg.freelook, (v) -> cfg.freelook = v));
-        options.add(new ToggleOption("AutoGG", "Sends GG in chat after multiplayer games", Category.GAMEPLAY, () -> cfg.autoGG, (v) -> cfg.autoGG = v));
+        // --- PvP Category ---
+        cards.add(new ModCard("ToggleSprint", "🏃", Category.PVP, () -> cfg.toggleSprint, (v) -> cfg.toggleSprint = v));
+        cards.add(new ModCard("Zoom", "🔍", Category.PVP, () -> cfg.zoom, (v) -> cfg.zoom = v));
+        cards.add(new ModCard("Freelook", "👁", Category.PVP, () -> cfg.freelook, (v) -> cfg.freelook = v));
+        cards.add(new ModCard("AutoGG", "🗣", Category.PVP, () -> cfg.autoGG, (v) -> cfg.autoGG = v));
+        cards.add(new ModCard("Hit Color", "⚔", Category.PVP, () -> cfg.animations, (v) -> cfg.animations = v));
+        cards.add(new ModCard("Hitbox outlines", "📦", Category.PVP, () -> cfg.hitbox, (v) -> cfg.hitbox = v));
+        cards.add(new ModCard("Reach Metric", "📏", Category.PVP, () -> cfg.reachDisplay, (v) -> cfg.reachDisplay = v));
+        cards.add(new ModCard("Combo PVP", "⚔", Category.PVP, () -> cfg.comboDisplay, (v) -> cfg.comboDisplay = v));
 
-        // --- Category: PERFORMANCE ---
-        options.add(new ToggleOption("Backups", "Manages world safety backups automatically", Category.PERFORMANCE, () -> cfg.backups, (v) -> cfg.backups = v));
-        options.add(new ToggleOption("Cull Logs", "Purges old log files to save drive space", Category.PERFORMANCE, () -> cfg.cullLogs, (v) -> cfg.cullLogs = v));
-        options.add(new ToggleOption("Custom Fog", "Allows configuration of render fog distances", Category.PERFORMANCE, () -> cfg.customFog, (v) -> cfg.customFog = v));
-        options.add(new ToggleOption("Item Despawn", "Flashes items when their despawn timer is near", Category.PERFORMANCE, () -> cfg.itemDespawn, (v) -> cfg.itemDespawn = v));
-
-        // --- Category: COSMETICS ---
-        options.add(new ToggleOption("Animations Mod", "1.7 animations, block hitting tweaks", Category.COSMETICS, () -> cfg.animations, (v) -> cfg.animations = v));
-        options.add(new ToggleOption("Block Highlight Overlay", "Outline or fill colors for focused blocks", Category.COSMETICS, () -> cfg.blockOverlay, (v) -> cfg.blockOverlay = v));
-        options.add(new ToggleOption("Fullbright", "Forces max brightness globally", Category.COSMETICS, () -> cfg.fullbright, (v) -> cfg.fullbright = v));
-        options.add(new ToggleOption("Camera Overrides", "Cinematic pan and camera smoothing parameters", Category.COSMETICS, () -> cfg.camera, (v) -> cfg.camera = v));
-        options.add(new ToggleOption("Color Saturation", "Enhance or deepen world colors via slider", Category.COSMETICS, () -> cfg.colorSaturation, (v) -> cfg.colorSaturation = v));
-        options.add(new ToggleOption("Custom Crosshair", "Interactive custom crosshair design layout", Category.COSMETICS, () -> cfg.customCrosshair, (v) -> cfg.customCrosshair = v));
-        options.add(new ToggleOption("Custom F3 Info", "Clutters out vanilla debug overlay values", Category.COSMETICS, () -> cfg.customF3, (v) -> cfg.customF3 = v));
-        options.add(new ToggleOption("Damage Indicator", "Draws health values above targeted mobs", Category.COSMETICS, () -> cfg.damageIndicator, (v) -> cfg.damageIndicator = v));
-        options.add(new ToggleOption("Dark Mode", "Dark themed container screen overlay textures", Category.COSMETICS, () -> cfg.darkMode, (v) -> cfg.darkMode = v));
-        options.add(new ToggleOption("Discord Rich Presence", "Custom play states on your Discord client", Category.COSMETICS, () -> cfg.discordRPC, (v) -> cfg.discordRPC = v));
-        options.add(new ToggleOption("Enchantment Glint", "Custom color and velocity for items glow", Category.COSMETICS, () -> cfg.glint, (v) -> cfg.glint = v));
-        options.add(new ToggleOption("Hitbox Outlines", "Draws visual hitbox outlines around entities", Category.COSMETICS, () -> cfg.hitbox, (v) -> cfg.hitbox = v));
-        options.add(new ToggleOption("Light Level Overlay", "Displays light grid values to prevent spawns", Category.COSMETICS, () -> cfg.lightLevel, (v) -> cfg.lightLevel = v));
-        options.add(new ToggleOption("Loot Beams", "Spawns beacons of light on dropped items", Category.COSMETICS, () -> cfg.lootBeams, (v) -> cfg.lootBeams = v));
-        options.add(new ToggleOption("Mob Outlines", "Outlines targeted or nearby passive/hostile mobs", Category.COSMETICS, () -> cfg.mobOverlay, (v) -> cfg.mobOverlay = v));
-        options.add(new ToggleOption("Motion Blur", "Applies smooth motion blur during movements", Category.COSMETICS, () -> cfg.motionBlur, (v) -> cfg.motionBlur = v));
-        options.add(new ToggleOption("Mousestrokes", "Monitors mouse physical velocity and vector", Category.COSMETICS, () -> cfg.mousestrokes, (v) -> cfg.mousestrokes = v));
-        options.add(new ToggleOption("Nametags Customizer", "Modifies player nametag scale and opacity", Category.COSMETICS, () -> cfg.nametags, (v) -> cfg.nametags = v));
-        options.add(new ToggleOption("Nick Hider", "Spoofs usernames and skins locally", Category.COSMETICS, () -> cfg.nickHider, (v) -> cfg.nickHider = v));
-        options.add(new ToggleOption("Pack Organizer", "Resource pack foldering and search structures", Category.COSMETICS, () -> cfg.packOrganizer, (v) -> cfg.packOrganizer = v));
-        options.add(new ToggleOption("Sound Reverb Filters", "Implements echoes and low-pass underwater filter", Category.COSMETICS, () -> cfg.soundFilters, (v) -> cfg.soundFilters = v));
-        options.add(new ToggleOption("Item Physics", "Dropped items fall flat on the ground realistically", Category.COSMETICS, () -> cfg.itemPhysics, (v) -> cfg.itemPhysics = v));
+        // --- New/Gameplay Category (also falls into ALL) ---
+        cards.add(new ModCard("Auto Text", "✍", Category.NEW, () -> cfg.autoText, (v) -> cfg.autoText = v)
+            .withConfig(() -> {
+                if (this.client != null) this.client.setScreen(new FeatherAutoTextScreen(this));
+            }));
         
-        // Setup buttons
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Edit HUD Layout"), button -> {
-            if (this.client != null) {
-                this.client.setScreen(new FeatherHudEditorScreen(this));
-            }
-        }).dimensions(10, this.height - 50, sidebarWidth - 20, 20).build());
-        
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Back"), button -> {
-            if (this.client != null) {
-                this.client.setScreen(parent);
-            }
-        }).dimensions(10, this.height - 25, sidebarWidth - 20, 20).build());
+        cards.add(new ModCard("TimeChanger", "☀️", Category.NEW, () -> cfg.timeChanger, (v) -> cfg.timeChanger = v)
+            .withConfig(() -> {
+                if (this.client != null) this.client.setScreen(new FeatherTimeChangerScreen(this));
+            }));
+
+        cards.add(new ModCard("Custom Crosshair", "⌖", Category.NEW, () -> cfg.customCrosshair, (v) -> cfg.customCrosshair = v)
+            .withConfig(() -> {
+                if (this.client != null) this.client.setScreen(new FeatherCrosshairScreen(this));
+            }));
+
+        cards.add(new ModCard("Fullbright", "💡", Category.NEW, () -> cfg.fullbright, (v) -> cfg.fullbright = v));
+        cards.add(new ModCard("Item Physics", "🌍", Category.NEW, () -> cfg.itemPhysics, (v) -> cfg.itemPhysics = v));
+        cards.add(new ModCard("Cull Logs", "🧹", Category.NEW, () -> cfg.cullLogs, (v) -> cfg.cullLogs = v));
+        cards.add(new ModCard("Drop Prevention", "🔒", Category.NEW, () -> cfg.dropPrevention, (v) -> cfg.dropPrevention = v));
+        cards.add(new ModCard("Nick Hider", "👤", Category.NEW, () -> cfg.nickHider, (v) -> cfg.nickHider = v));
+        cards.add(new ModCard("Scoreboard", "📋", Category.NEW, () -> cfg.scoreboard, (v) -> cfg.scoreboard = v));
     }
 
-    private int getCategoryOptionCount() {
-        int count = 0;
-        for (ToggleOption opt : options) {
-            if (opt.category == currentCategory) {
-                count++;
+    private List<ModCard> getFilteredCards() {
+        if (currentCategory == Category.ALL) {
+            return cards;
+        }
+        List<ModCard> list = new ArrayList<>();
+        for (ModCard c : cards) {
+            if (c.category == currentCategory) {
+                list.add(c);
             }
         }
-        return count;
+        return list;
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (mouseX > sidebarWidth) {
-            int totalHeight = getCategoryOptionCount() * 45;
-            double maxScroll = Math.max(0, totalHeight - (this.height - 30));
+        if (mouseX >= boxX && mouseX <= boxX + boxWidth && mouseY >= boxY + 60 && mouseY <= boxY + boxHeight) {
+            int itemsCount = getFilteredCards().size();
+            int rowsCount = (itemsCount + 2) / 3;
+            int totalHeight = rowsCount * 55;
+            double maxScroll = Math.max(0, totalHeight - (boxHeight - 75));
             scrollY -= verticalAmount * 15;
             if (scrollY < 0) scrollY = 0;
             if (scrollY > maxScroll) scrollY = maxScroll;
@@ -173,117 +159,176 @@ public class FeatherSettingsScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Modern Feather Client themed background rendering
-        // Left Sidebar: Darker purple
-        context.fill(0, 0, sidebarWidth, this.height, 0xFF140D1A);
+        // Render game behind screen
+        context.fill(0, 0, this.width, this.height, 0x60000000);
+
+        // --- Render Centered Overlay Window Container ---
+        context.fill(boxX, boxY, boxX + boxWidth, boxY + boxHeight, 0xFF141416);
+        context.drawBorder(boxX, boxY, boxWidth, boxHeight, 0xFF2A2A2E);
+
+        // --- Render Header (Top bar tabs) ---
+        int topBarY = boxY + 4;
+        // Tab background indicator
+        context.fill(boxX + 6, topBarY, boxX + 70, topBarY + 22, 0xFF9C27B0);
+        context.drawText(this.textRenderer, "MOD MENU", boxX + 12, topBarY + 7, 0xFFFFFFFF, false);
         
-        // Right Main Area: Sleek dark grey
-        context.fill(sidebarWidth, 0, this.width, this.height, 0xFF18181A);
-        
-        // Title
-        context.drawText(this.textRenderer, "FEATHER CLIENT", 10, 15, 0xFF9C27B0, true);
-        context.drawText(this.textRenderer, "Pojav Edition", 10, 27, 0xFF6A1B9A, true);
-        
-        // Render Sidebar Category Selection Buttons
-        int categoryY = 50;
-        for (Category cat : Category.values()) {
-            boolean isSelected = cat == currentCategory;
-            boolean isHovered = mouseX >= 5 && mouseX <= sidebarWidth - 5 && mouseY >= categoryY && mouseY <= categoryY + 20;
-            
-            int color = isSelected ? 0xFF9C27B0 : (isHovered ? 0xFF311B92 : 0x00000000);
-            if (color != 0x00000000) {
-                context.fill(5, categoryY, sidebarWidth - 5, categoryY + 20, color);
-            }
-            
-            context.drawText(this.textRenderer, cat.name, 12, categoryY + 6, isSelected ? 0xFFFFFFFF : 0xFFCCCCCC, false);
-            categoryY += 25;
+        // Icons row
+        int iconX = boxX + 85;
+        String[] headerIcons = {"💬", "👕", "📺", "⚙", "👥"};
+        for (String icon : headerIcons) {
+            context.drawText(this.textRenderer, icon, iconX, topBarY + 7, 0xFF888888, false);
+            iconX += 20;
         }
-        
-        // Render Category Contents (with Scrolling support)
-        int optionY = 20 - (int) scrollY;
-        int listLeft = sidebarWidth + 20;
-        int listWidth = this.width - listLeft - 20;
-        
-        // Enable scissoring to prevent options drawing over header or footer
-        context.enableScissor(listLeft - 5, 5, listLeft + listWidth + 5, this.height - 5);
-        
-        for (ToggleOption opt : options) {
-            if (opt.category != currentCategory) continue;
+
+        // Close X button
+        boolean closeHovered = mouseX >= boxX + boxWidth - 20 && mouseX <= boxX + boxWidth - 5 && mouseY >= topBarY && mouseY <= topBarY + 20;
+        context.drawText(this.textRenderer, "X", boxX + boxWidth - 16, topBarY + 7, closeHovered ? 0xFFE53935 : 0xFF888888, false);
+
+        // --- Render Sub-Tabs (All, PvP, HUD, New) ---
+        int subTabY = boxY + 30;
+        int tabX = boxX + 10;
+        for (Category cat : Category.values()) {
+            boolean active = cat == currentCategory;
+            int textW = this.textRenderer.getWidth(cat.name) + 12;
+            boolean hovered = mouseX >= tabX && mouseX <= tabX + textW && mouseY >= subTabY && mouseY <= subTabY + 16;
             
-            // Only render if visible on screen
-            if (optionY + 40 >= 0 && optionY <= this.height) {
-                boolean isHovered = mouseX >= listLeft && mouseX <= listLeft + listWidth && mouseY >= optionY && mouseY <= optionY + 40;
-                context.fill(listLeft, optionY, listLeft + listWidth, optionY + 40, isHovered ? 0xFF2A2A2E : 0xFF222224);
-                context.drawBorder(listLeft, optionY, listWidth, 40, 0xFF3E3E42);
+            context.fill(tabX, subTabY, tabX + textW, subTabY + 16, active ? 0x809C27B0 : (hovered ? 0xFF2A2A2E : 0x00000000));
+            context.drawBorder(tabX, subTabY, textW, 16, active ? 0xFF9C27B0 : 0x20FFFFFF);
+            context.drawCenteredTextWithShadow(this.textRenderer, cat.name, tabX + textW / 2, subTabY + 4, active ? 0xFFFFFFFF : 0xFFCCCCCC);
+            
+            tabX += textW + 6;
+        }
+
+        // --- Render Grid of Mod Cards ---
+        int cardAreaY = boxY + 54;
+        int cardAreaH = boxHeight - 64;
+        int cardWidth = (boxWidth - 30) / 3;
+        int cardHeight = 50;
+
+        context.enableScissor(boxX + 5, cardAreaY, boxX + boxWidth - 5, cardAreaY + cardAreaH);
+        
+        List<ModCard> filtered = getFilteredCards();
+        int index = 0;
+        for (ModCard card : filtered) {
+            int col = index % 3;
+            int row = index / 3;
+            
+            int cardX = boxX + 10 + col * (cardWidth + 5);
+            int cardY = cardAreaY + 6 + row * (cardHeight + 5) - (int) scrollY;
+            
+            if (cardY + cardHeight >= cardAreaY && cardY <= cardAreaY + cardAreaH) {
+                boolean cardHovered = mouseX >= cardX && mouseX <= cardX + cardWidth && mouseY >= cardY && mouseY <= cardY + cardHeight;
+                context.fill(cardX, cardY, cardX + cardWidth, cardY + cardHeight, cardHovered ? 0xFF222224 : 0xFF18181A);
+                context.drawBorder(cardX, cardY, cardWidth, cardHeight, cardHovered ? 0x80FFFFFF : 0x20FFFFFF);
                 
-                // Name & Desc
-                context.drawText(this.textRenderer, opt.name, listLeft + 10, optionY + 8, 0xFFFFFFFF, false);
-                context.drawText(this.textRenderer, opt.desc, listLeft + 10, optionY + 22, 0xFF888888, false);
+                // Mod title
+                String displayName = card.name;
+                if (displayName.length() > 14) displayName = displayName.substring(0, 12) + "..";
+                context.drawText(this.textRenderer, displayName, cardX + 6, cardY + 5, 0xFFFFFFFF, false);
                 
-                // Toggle Switch rendering (Pill shape)
-                boolean enabled = opt.getter.getAsBoolean();
-                int toggleX = listLeft + listWidth - 50;
-                int toggleY = optionY + 12;
+                // Center Icon
+                context.drawCenteredTextWithShadow(this.textRenderer, card.icon, cardX + cardWidth / 2, cardY + 16, 0xFFCCCCCC);
                 
-                // Draw Toggle background
-                context.fill(toggleX, toggleY, toggleX + 40, toggleY + 16, enabled ? 0xFF9C27B0 : 0xFF4A4A4F);
-                // Draw Toggle handle
-                int handleX = enabled ? toggleX + 24 : toggleX + 2;
-                context.fill(handleX, toggleY + 2, handleX + 14, toggleY + 14, 0xFFFFFFFF);
+                // Bottom-left Settings Gear (if configurable)
+                if (card.onConfigure != null) {
+                    boolean gearHovered = mouseX >= cardX + 5 && mouseX <= cardX + 18 && mouseY >= cardY + cardHeight - 16 && mouseY <= cardY + cardHeight - 3;
+                    context.drawText(this.textRenderer, "⚙", cardX + 6, cardY + cardHeight - 13, gearHovered ? 0xFFBA68C8 : 0xFF888888, false);
+                }
+                
+                // Bottom-right Toggle Button
+                boolean enabled = card.getter.getAsBoolean();
+                int btnW = 42;
+                int btnH = 12;
+                int btnX = cardX + cardWidth - btnW - 6;
+                int btnY = cardY + cardHeight - btnH - 5;
+                
+                boolean btnHovered = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
+                int toggleColor = enabled ? 0xFF2E7D32 : 0xFF37474F;
+                if (btnHovered) toggleColor = enabled ? 0xFF388E3C : 0xFF455A64;
+                
+                context.fill(btnX, btnY, btnX + btnW, btnY + btnH, toggleColor);
+                context.drawCenteredTextWithShadow(this.textRenderer, enabled ? "Enabled" : "Disabled", btnX + btnW / 2, btnY + 2, 0xFFFFFFFF);
             }
             
-            optionY += 45;
+            index++;
         }
         
         context.disableScissor();
-        
-        // Draw Scroll Bar indicator if list overflows
-        int totalHeight = getCategoryOptionCount() * 45;
-        if (totalHeight > this.height - 30) {
-            int scrollBarHeight = (int) (((double) (this.height - 30) / totalHeight) * (this.height - 30));
-            int scrollBarY = 15 + (int) ((scrollY / (totalHeight - (this.height - 30))) * (this.height - 30 - scrollBarHeight));
-            context.fill(this.width - 6, scrollBarY, this.width - 2, scrollBarY + scrollBarHeight, 0xFF555555);
+
+        // Draw Scrollbar Indicator
+        int rowsCount = (filtered.size() + 2) / 3;
+        int totalHeight = rowsCount * 55;
+        if (totalHeight > cardAreaH) {
+            int scrollBarHeight = (int) (((double) cardAreaH / totalHeight) * cardAreaH);
+            int scrollBarY = cardAreaY + (int) ((scrollY / (totalHeight - cardAreaH)) * (cardAreaH - scrollBarHeight));
+            context.fill(boxX + boxWidth - 4, scrollBarY, boxX + boxWidth - 1, scrollBarY + scrollBarHeight, 0xFF555555);
         }
-        
+
         super.render(context, mouseX, mouseY, delta);
     }
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Handle Sidebar Category Clicks
-        int categoryY = 50;
+        int topBarY = boxY + 4;
+        
+        // Handle Close X button
+        if (mouseX >= boxX + boxWidth - 20 && mouseX <= boxX + boxWidth - 5 && mouseY >= topBarY && mouseY <= topBarY + 20) {
+            this.close();
+            return true;
+        }
+
+        // Handle Sub-Tabs Clicks
+        int subTabY = boxY + 30;
+        int tabX = boxX + 10;
         for (Category cat : Category.values()) {
-            if (mouseX >= 5 && mouseX <= sidebarWidth - 5 && mouseY >= categoryY && mouseY <= categoryY + 20) {
+            int textW = this.textRenderer.getWidth(cat.name) + 12;
+            if (mouseX >= tabX && mouseX <= tabX + textW && mouseY >= subTabY && mouseY <= subTabY + 16) {
                 currentCategory = cat;
-                scrollY = 0; // Reset scroll on category change
+                scrollY = 0;
                 return true;
             }
-            categoryY += 25;
+            tabX += textW + 6;
         }
-        
-        // Handle Option Toggle clicks (incorporating scrollY offset)
-        int optionY = 20 - (int) scrollY;
-        int listLeft = sidebarWidth + 20;
-        int listWidth = this.width - listLeft - 20;
-        
-        for (ToggleOption opt : options) {
-            if (opt.category != currentCategory) continue;
+
+        // Handle Cards interaction
+        int cardAreaY = boxY + 54;
+        int cardAreaH = boxHeight - 64;
+        int cardWidth = (boxWidth - 30) / 3;
+        int cardHeight = 50;
+
+        List<ModCard> filtered = getFilteredCards();
+        int index = 0;
+        for (ModCard card : filtered) {
+            int col = index % 3;
+            int row = index / 3;
             
-            // Verify option is drawn on screen
-            if (optionY + 40 >= 5 && optionY <= this.height - 5) {
-                // If toggle switch area is clicked
-                int toggleX = listLeft + listWidth - 50;
-                int toggleY = optionY + 12;
-                if (mouseX >= toggleX && mouseX <= toggleX + 40 && mouseY >= toggleY && mouseY <= toggleY + 16) {
-                    opt.setter.accept(!opt.getter.getAsBoolean());
+            int cardX = boxX + 10 + col * (cardWidth + 5);
+            int cardY = cardAreaY + 6 + row * (cardHeight + 5) - (int) scrollY;
+            
+            if (cardY + cardHeight >= cardAreaY && cardY <= cardAreaY + cardAreaH) {
+                // If gear clicked
+                if (card.onConfigure != null) {
+                    if (mouseX >= cardX + 5 && mouseX <= cardX + 18 && mouseY >= cardY + cardHeight - 16 && mouseY <= cardY + cardHeight - 3) {
+                        card.onConfigure.run();
+                        return true;
+                    }
+                }
+                
+                // If enabled/disabled button clicked
+                int btnW = 42;
+                int btnH = 12;
+                int btnX = cardX + cardWidth - btnW - 6;
+                int btnY = cardY + cardHeight - btnH - 5;
+                
+                if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    card.setter.accept(!card.getter.getAsBoolean());
                     FeatherConfig.save();
                     return true;
                 }
             }
-            
-            optionY += 45;
+            index++;
         }
-        
+
         return super.mouseClicked(mouseX, mouseY, button);
     }
     
@@ -297,5 +342,181 @@ public class FeatherSettingsScreen extends Screen {
         if (this.client != null) {
             this.client.setScreen(parent);
         }
+    }
+}
+
+// ==========================================
+// Sub-Settings Configuration Screen: Auto Text
+// ==========================================
+class FeatherAutoTextScreen extends Screen {
+    private final Screen parent;
+    private TextFieldWidget inputField;
+
+    protected FeatherAutoTextScreen(Screen parent) {
+        super(Text.of("Auto Text Settings"));
+        this.parent = parent;
+    }
+
+    @Override
+    protected void init() {
+        // Centered input field
+        inputField = new TextFieldWidget(this.textRenderer, this.width / 2 - 100, this.height / 2 - 20, 200, 20, Text.of("Edit Macro Command"));
+        inputField.setMaxLength(128);
+        inputField.setText(FeatherConfig.INSTANCE.autoTextCommand);
+        this.addSelectableChild(inputField);
+
+        // Save & Back button
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Save & Back"), button -> {
+            FeatherConfig.INSTANCE.autoTextCommand = inputField.getText();
+            FeatherConfig.save();
+            if (this.client != null) this.client.setScreen(parent);
+        }).dimensions(this.width / 2 - 50, this.height / 2 + 10, 100, 20).build());
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        context.fill(0, 0, this.width, this.height, 0xD0141416);
+        context.drawCenteredTextWithShadow(this.textRenderer, "AUTO TEXT MACRO CONFIG", this.width / 2, this.height / 2 - 50, 0xFFFFFFFF);
+        context.drawCenteredTextWithShadow(this.textRenderer, "Binds to 'U' key in game", this.width / 2, this.height / 2 - 38, 0xFF888888);
+        inputField.render(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);
+    }
+
+    @Override
+    public void close() {
+        if (this.client != null) this.client.setScreen(parent);
+    }
+}
+
+// ==========================================
+// Sub-Settings Configuration Screen: TimeChanger
+// ==========================================
+class FeatherTimeChangerScreen extends Screen {
+    private final Screen parent;
+
+    protected FeatherTimeChangerScreen(Screen parent) {
+        super(Text.of("TimeChanger Settings"));
+        this.parent = parent;
+    }
+
+    @Override
+    protected void init() {
+        int leftX = this.width / 2 - 95;
+        int startY = this.height / 2 - 35;
+
+        // Presets: Morning (0), Day (6000), Sunset (12000), Night (18000)
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Morning"), button -> setTime(0, 0)).dimensions(leftX, startY, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Day"), button -> setTime(6000, 1)).dimensions(leftX + 100, startY, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Sunset"), button -> setTime(12000, 2)).dimensions(leftX, startY + 25, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Night"), button -> setTime(18000, 3)).dimensions(leftX + 100, startY + 25, 90, 20).build());
+
+        // Back button
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Back"), button -> {
+            if (this.client != null) this.client.setScreen(parent);
+        }).dimensions(this.width / 2 - 45, startY + 60, 90, 20).build());
+    }
+
+    private void setTime(long ticks, int mode) {
+        FeatherConfig.INSTANCE.timeChangerTicks = ticks;
+        FeatherConfig.INSTANCE.timeChangerMode = mode;
+        FeatherConfig.save();
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        context.fill(0, 0, this.width, this.height, 0xD0141416);
+        context.drawCenteredTextWithShadow(this.textRenderer, "TIMECHANGER PRESETS", this.width / 2, this.height / 2 - 60, 0xFFFFFFFF);
+        
+        String modeName = "Day";
+        if (FeatherConfig.INSTANCE.timeChangerMode == 0) modeName = "Morning";
+        else if (FeatherConfig.INSTANCE.timeChangerMode == 2) modeName = "Sunset";
+        else if (FeatherConfig.INSTANCE.timeChangerMode == 3) modeName = "Night";
+        context.drawCenteredTextWithShadow(this.textRenderer, "Active: " + modeName + " (" + FeatherConfig.INSTANCE.timeChangerTicks + " ticks)", this.width / 2, this.height / 2 - 48, 0xFFBA68C8);
+        
+        super.render(context, mouseX, mouseY, delta);
+    }
+
+    @Override
+    public void close() {
+        if (this.client != null) this.client.setScreen(parent);
+    }
+}
+
+// ==========================================
+// Sub-Settings Configuration Screen: Crosshair
+// ==========================================
+class FeatherCrosshairScreen extends Screen {
+    private final Screen parent;
+
+    protected FeatherCrosshairScreen(Screen parent) {
+        super(Text.of("Crosshair Settings"));
+        this.parent = parent;
+    }
+
+    @Override
+    protected void init() {
+        int leftX = this.width / 2 - 95;
+        int startY = this.height / 2 - 35;
+
+        // Size adjustment
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Size +"), button -> adjustSize(0.5f)).dimensions(leftX, startY, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Size -"), button -> adjustSize(-0.5f)).dimensions(leftX + 100, startY, 90, 20).build());
+
+        // Gap adjustment
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Gap +"), button -> adjustGap(0.5f)).dimensions(leftX, startY + 25, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Gap -"), button -> adjustGap(-0.5f)).dimensions(leftX + 100, startY + 25, 90, 20).build());
+
+        // Thickness adjustment
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Thickness +"), button -> adjustTh(0.5f)).dimensions(leftX, startY + 50, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Thickness -"), button -> adjustTh(-0.5f)).dimensions(leftX + 100, startY + 50, 90, 20).build());
+
+        // Back button
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Back"), button -> {
+            if (this.client != null) this.client.setScreen(parent);
+        }).dimensions(this.width / 2 - 45, startY + 80, 90, 20).build());
+    }
+
+    private void adjustSize(float val) {
+        FeatherConfig.INSTANCE.crosshairSize = Math.max(1.0f, FeatherConfig.INSTANCE.crosshairSize + val);
+        FeatherConfig.save();
+    }
+
+    private void adjustGap(float val) {
+        FeatherConfig.INSTANCE.crosshairGap = Math.max(0.0f, FeatherConfig.INSTANCE.crosshairGap + val);
+        FeatherConfig.save();
+    }
+
+    private void adjustTh(float val) {
+        FeatherConfig.INSTANCE.crosshairThickness = Math.max(0.5f, FeatherConfig.INSTANCE.crosshairThickness + val);
+        FeatherConfig.save();
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        context.fill(0, 0, this.width, this.height, 0xD0141416);
+        context.drawCenteredTextWithShadow(this.textRenderer, "CUSTOM CROSSHAIR CONFIGURATION", this.width / 2, this.height / 2 - 75, 0xFFFFFFFF);
+        
+        FeatherConfig cfg = FeatherConfig.INSTANCE;
+        String desc = String.format("Size: %.1f | Gap: %.1f | Thickness: %.1f", cfg.crosshairSize, cfg.crosshairGap, cfg.crosshairThickness);
+        context.drawCenteredTextWithShadow(this.textRenderer, desc, this.width / 2, this.height / 2 - 60, 0xFFBA68C8);
+        
+        // Render a preview of the crosshair in the center top
+        int cx = this.width / 2;
+        int cy = this.height / 2 - 100;
+        float gap = cfg.crosshairGap;
+        float size = cfg.crosshairSize;
+        float th = cfg.crosshairThickness;
+        int color = cfg.crosshairColor;
+        context.fill((int)(cx - gap - size), (int)(cy - th/2), (int)(cx - gap), (int)(cy + th/2 + 0.5f), color);
+        context.fill((int)(cx + gap), (int)(cy - th/2), (int)(cx + gap + size), (int)(cy + th/2 + 0.5f), color);
+        context.fill((int)(cx - th/2), (int)(cy - gap - size), (int)(cx + th/2 + 0.5f), (int)(cy - gap), color);
+        context.fill((int)(cx - th/2), (int)(cy + gap), (int)(cx + th/2 + 0.5f), (int)(cy + gap + size), color);
+
+        super.render(context, mouseX, mouseY, delta);
+    }
+
+    @Override
+    public void close() {
+        if (this.client != null) this.client.setScreen(parent);
     }
 }

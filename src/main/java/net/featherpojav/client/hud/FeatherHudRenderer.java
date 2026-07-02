@@ -196,47 +196,37 @@ public class FeatherHudRenderer {
             
             float playerYaw = client.player.getYaw();
             
-            // Draw scale markings
-            for (int i = -60; i <= 60; i += 5) {
-                float angle = playerYaw + i;
-                float normalizedAngle = (angle % 360 + 360) % 360;
+            // Draw N, S, E, W
+            String[] dirs = {"S", "W", "N", "E"};
+            for (int j = 0; j < 4; j++) {
+                float angle = j * 90;
+                float diff = angle - playerYaw;
+                diff = ((diff + 180) % 360 + 360) % 360 - 180;
                 
-                // Position on screen relative to center
-                int posX = dx + width / 2 + (int) (i * 1.5f);
-                if (posX < dx + 3 || posX > dx + width - 3) continue;
+                if (Math.abs(diff) <= 60) {
+                    int posX = dx + width / 2 + (int) (diff * 1.3f);
+                    context.drawCenteredTextWithShadow(tr, dirs[j], posX, dy + 2, cfg.themeColor);
+                }
+            }
+            
+            // Draw degree markings every 15 degrees
+            for (int angle = 0; angle < 360; angle += 15) {
+                if (angle % 90 == 0) continue;
+                float diff = angle - playerYaw;
+                diff = ((diff + 180) % 360 + 360) % 360 - 180;
                 
-                if (normalizedAngle % 90 == 0) {
-                    // Main directions: N, S, E, W
-                    String dir = "N";
-                    if (Math.abs(normalizedAngle - 0) < 1) dir = "S";
-                    else if (Math.abs(normalizedAngle - 90) < 1) dir = "W";
-                    else if (Math.abs(normalizedAngle - 180) < 1) dir = "N";
-                    else if (Math.abs(normalizedAngle - 270) < 1) dir = "E";
-                    
-                    context.drawCenteredTextWithShadow(tr, dir, posX, dy + 2, 0xFFFFFFFF);
-                } else if (normalizedAngle % 45 == 0) {
-                    // Sub-directions: NE, SE, SW, NW
-                    String dir = "SW";
-                    if (Math.abs(normalizedAngle - 45) < 1) dir = "SW";
-                    else if (Math.abs(normalizedAngle - 135) < 1) dir = "NW";
-                    else if (Math.abs(normalizedAngle - 225) < 1) dir = "NE";
-                    else if (Math.abs(normalizedAngle - 315) < 1) dir = "SE";
-                    
-                    context.drawCenteredTextWithShadow(tr, dir, posX, dy + 3, 0xFFCCCCCC);
-                } else if (normalizedAngle % 15 == 0) {
-                    // Degree markers
-                    String degrees = String.valueOf((int) normalizedAngle / 10);
-                    context.drawCenteredTextWithShadow(tr, degrees, posX, dy + 4, 0xFF888888);
+                if (Math.abs(diff) <= 60) {
+                    int posX = dx + width / 2 + (int) (diff * 1.3f);
+                    context.drawCenteredTextWithShadow(tr, String.valueOf(angle), posX, dy + 4, 0xFF888888);
                 }
             }
         }
 
-        // 5. Armor HUD
+        // 5. Armor HUD & Armor Status
         if (cfg.armorHUD) {
             int ax = cfg.armorHUDX;
             int ay = cfg.armorHUDY;
             
-            // Gather all items: main hand, helmet, chestplate, leggings, boots, offhand
             List<ItemStack> items = new ArrayList<>();
             items.add(client.player.getMainHandStack());
             for (int i = 3; i >= 0; i--) {
@@ -251,9 +241,17 @@ public class FeatherHudRenderer {
                 int itemX = ax + (cfg.armorHUDVertical ? 0 : offset);
                 int itemY = ay + (cfg.armorHUDVertical ? offset : 0);
                 
+                context.drawItem(stack, itemX, itemY);
                 context.drawItemInSlot(tr, stack, itemX, itemY);
                 
-                offset += cfg.armorHUDVertical ? 18 : 22;
+                if (cfg.armorStatus && stack.isDamageable()) {
+                    int maxDmg = stack.getMaxDamage();
+                    int curDmg = maxDmg - stack.getDamage();
+                    String durText = curDmg + "/" + maxDmg;
+                    context.drawText(tr, durText, itemX + 18, itemY + 4, 0xFF88FF88, true);
+                }
+                
+                offset += cfg.armorHUDVertical ? 18 : 36;
             }
         }
 
@@ -272,7 +270,6 @@ public class FeatherHudRenderer {
                     effectName += " " + (amplifier + 1);
                 }
                 
-                // Format duration (MM:SS)
                 int duration = effect.getDuration();
                 String durationStr = "Permanent";
                 if (!effect.isInfinite()) {
@@ -289,6 +286,44 @@ public class FeatherHudRenderer {
                 context.drawText(tr, fullText, px + 6, py + offsetY + 3, 0xFFFFFFFF, false);
                 offsetY += 16;
             }
+        }
+
+        // 6a. Armor Bar
+        if (cfg.armorBar) {
+            int armorValue = client.player.getArmor();
+            if (armorValue > 0) {
+                int barX = client.getWindow().getScaledWidth() / 2 - 91;
+                int barY = client.getWindow().getScaledHeight() - 49;
+                context.drawText(tr, "🛡 " + armorValue, barX, barY, 0xFF5C6BC0, true);
+            }
+        }
+
+        // 6b. Hearts Multiplier
+        if (cfg.hearts) {
+            int hp = (int) client.player.getHealth();
+            int maxHp = (int) client.player.getMaxHealth();
+            int abs = (int) client.player.getAbsorptionAmount();
+            String hpText = "❤ " + hp + "/" + maxHp;
+            if (abs > 0) hpText += " + " + abs + "★";
+            int barX = client.getWindow().getScaledWidth() / 2 - 91;
+            int barY = client.getWindow().getScaledHeight() - 40;
+            context.drawText(tr, hpText, barX, barY, 0xFFE57373, true);
+        }
+
+        // 6c. Pack Display
+        if (cfg.packDisplay) {
+            int px = cfg.packDisplayX;
+            int py = cfg.packDisplayY;
+            String packName = "Default";
+            if (client.getResourcePackManager() != null) {
+                var enabledPacks = client.getResourcePackManager().getEnabledProfiles();
+                if (!enabledPacks.isEmpty()) {
+                    packName = enabledPacks.iterator().next().getDisplayName().getString();
+                }
+            }
+            context.fill(px, py, px + 110, py + 14, 0x80000000);
+            context.fill(px, py, px + 2, py + 14, cfg.themeColor);
+            context.drawText(tr, "Pack: " + packName, px + 6, py + 3, 0xFFFFFFFF, false);
         }
 
         // 7. Combo Display

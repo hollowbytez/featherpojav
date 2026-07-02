@@ -203,7 +203,7 @@ public class FeatherGameMenuScreen extends Screen {
 
         // --- Render Top Right Profile Panel & Shortcut Keys ---
         if (this.client != null && this.client.player != null) {
-            int rightX = this.width - 240;
+            int rightX = Math.max(this.width / 2 + 105, this.width - 225);
             int topY = 15;
 
             // Profile Card (rounded box design)

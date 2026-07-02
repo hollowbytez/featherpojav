@@ -93,6 +93,10 @@ public class FeatherConfig {
     public boolean soundFilters = false;
     public boolean itemPhysics = true;
 
+    // Custom mod details
+    public String autoTextCommand = "/lobby";
+    public int timeChangerMode = 1; // 0 = Morning, 1 = Day, 2 = Sunset, 3 = Night
+
     // HUD Positions
     public int keystrokesX = 10;
     public int keystrokesY = 100;
@@ -136,6 +140,9 @@ public class FeatherConfig {
 
     public int itemCounterX = 10;
     public int itemCounterY = 270;
+
+    public int packDisplayX = 10;
+    public int packDisplayY = 290;
     
     // Crosshair Customize
     public int crosshairColor = 0xFF00FF00;
