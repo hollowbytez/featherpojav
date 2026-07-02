@@ -154,7 +154,7 @@ public class FeatherGameMenuScreen extends Screen {
         
         // Render Feather Logo Texture (translucent white)
         Identifier logoId = Identifier.of("featherpojav", "icon.png");
-        context.drawTexture(logoId, 25, this.height / 2 - 80, 0, 0, 160, 160, 160, 160);
+        context.drawTexture(logoId, 25, this.height / 2 - 80, 0.0f, 0.0f, 160, 160, 500, 500);
 
         // Render scattered crosses "+"
         context.drawText(this.textRenderer, "+", 40, this.height / 2 - 120, 0x30FFFFFF, false);
@@ -162,14 +162,15 @@ public class FeatherGameMenuScreen extends Screen {
         context.drawText(this.textRenderer, "+", 100, this.height / 2 + 100, 0x40FFFFFF, false);
         context.drawText(this.textRenderer, "+", 160, this.height / 2 - 70, 0x15FFFFFF, false);
 
-        // --- Render Center Header & Brand ---
+        // --- Render Center Header & Brand (using new custom title logo) ---
         int centerY = this.height / 2 - 130;
-        // Small Feather Logo on top of buttons
-        context.drawTexture(logoId, this.width / 2 - 65, centerY, 0.0f, 0.0f, 24, 24, 96, 96);
-        context.drawText(this.textRenderer, "FEATHER CLIENT", this.width / 2 - 35, centerY + 8, 0xFFFFFFFF, true);
+        int logoW = 160;
+        int logoH = 90;
+        Identifier titleLogo = Identifier.of("featherpojav", "textures/title.png");
+        context.drawTexture(titleLogo, this.width / 2 - logoW / 2, centerY - 45, 0.0f, 0.0f, logoW, logoH, 3264, 1836);
 
         // --- Render Center Buttons ---
-        int buttonY = centerY + 40;
+        int buttonY = centerY + 50;
         int buttonWidth = 190;
         int buttonHeight = 24;
         int leftX = this.width / 2 - buttonWidth / 2;
@@ -257,7 +258,7 @@ public class FeatherGameMenuScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         // Handle Center Menu Button Clicks
         int centerY = this.height / 2 - 130;
-        int buttonY = centerY + 40;
+        int buttonY = centerY + 50;
         int buttonWidth = 190;
         int buttonHeight = 24;
         int leftX = this.width / 2 - buttonWidth / 2;

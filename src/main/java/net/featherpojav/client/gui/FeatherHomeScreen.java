@@ -118,12 +118,12 @@ public class FeatherHomeScreen extends Screen {
         // --- Render Center Header & Brand (using new custom title logo) ---
         int centerY = this.height / 2 - 115;
         int logoW = 160;
-        int logoH = 45;
+        int logoH = 90;
         Identifier logoId = Identifier.of("featherpojav", "textures/title.png");
-        context.drawTexture(logoId, this.width / 2 - logoW / 2, centerY - 20, 0.0f, 0.0f, logoW, logoH, logoW, logoH);
+        context.drawTexture(logoId, this.width / 2 - logoW / 2, centerY - 50, 0.0f, 0.0f, logoW, logoH, 3264, 1836);
 
         // --- Render Center Main Buttons ---
-        int buttonY = centerY + 30;
+        int buttonY = centerY + 45;
         int buttonWidth = 190;
         int buttonHeight = 24;
         int leftX = this.width / 2 - buttonWidth / 2;
@@ -213,8 +213,8 @@ public class FeatherHomeScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         // Handle Main buttons clicks
-        int centerY = this.height / 2 - 110;
-        int buttonY = centerY + 30;
+        int centerY = this.height / 2 - 115;
+        int buttonY = centerY + 45;
         int buttonWidth = 190;
         int buttonHeight = 24;
         int leftX = this.width / 2 - buttonWidth / 2;

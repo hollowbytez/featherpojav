@@ -173,6 +173,7 @@ public class FeatherSettingsScreen extends Screen {
                 list.add(c);
             }
         }
+        list.sort(java.util.Comparator.comparing(c -> c.name));
         return list;
     }
 
