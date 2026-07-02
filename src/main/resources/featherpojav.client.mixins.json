@@ -14,7 +14,8 @@
 		"SessionMixin",
 		"BossBarHudMixin",
 		"LightmapTextureManagerMixin",
-		"LightmapTextureManagerAccessor"
+		"LightmapTextureManagerAccessor",
+		"InGameOverlayRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

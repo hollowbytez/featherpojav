@@ -38,6 +38,13 @@ public class GameRendererMixin {
         }
     }
 
+    @Inject(method = "tiltViewWhenHurt", at = @At("HEAD"), cancellable = true)
+    private void onTiltViewWhenHurt(net.minecraft.client.util.math.MatrixStack matrices, float tickDelta, CallbackInfo ci) {
+        if (!FeatherConfig.INSTANCE.hurtCam) {
+            ci.cancel();
+        }
+    }
+
     @Inject(method = "renderBlur", at = @At("HEAD"), cancellable = true)
     private void onRenderBlur(float delta, CallbackInfo ci) {
         if (this.client != null && this.client.currentScreen != null) {

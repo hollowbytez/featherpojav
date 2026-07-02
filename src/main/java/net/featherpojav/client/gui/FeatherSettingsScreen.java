@@ -113,6 +113,7 @@ public class FeatherSettingsScreen extends Screen {
         cards.add(new ModCard("Hearts", "❤", Category.HUD, () -> cfg.hearts, (v) -> cfg.hearts = v));
         cards.add(new ModCard("Pack Display", "🗂", Category.HUD, () -> cfg.packDisplay, (v) -> cfg.packDisplay = v));
         cards.add(new ModCard("Scoreboard", "📋", Category.HUD, () -> cfg.scoreboard, (v) -> cfg.scoreboard = v));
+        cards.add(new ModCard("Damage Indicator", "💔", Category.HUD, () -> cfg.damageIndicator, (v) -> cfg.damageIndicator = v));
 
         // --- PvP Category ---
         cards.add(new ModCard("ToggleSprint", "🏃", Category.PVP, () -> cfg.toggleSprint, (v) -> cfg.toggleSprint = v)
@@ -132,6 +133,8 @@ public class FeatherSettingsScreen extends Screen {
         cards.add(new ModCard("Hitbox outlines", "📦", Category.PVP, () -> cfg.hitbox, (v) -> cfg.hitbox = v));
         cards.add(new ModCard("Reach Metric", "📏", Category.PVP, () -> cfg.reachDisplay, (v) -> cfg.reachDisplay = v));
         cards.add(new ModCard("Combo PVP", "⚔", Category.PVP, () -> cfg.comboDisplay, (v) -> cfg.comboDisplay = v));
+        cards.add(new ModCard("Low Fire", "🔥", Category.PVP, () -> cfg.lowFire, (v) -> cfg.lowFire = v));
+        cards.add(new ModCard("Hurt Cam", "🤕", Category.PVP, () -> cfg.hurtCam, (v) -> cfg.hurtCam = v));
 
         // --- New/Gameplay Category (also falls into ALL) ---
         cards.add(new ModCard("Auto Text", "✍", Category.NEW, () -> cfg.autoText, (v) -> cfg.autoText = v)

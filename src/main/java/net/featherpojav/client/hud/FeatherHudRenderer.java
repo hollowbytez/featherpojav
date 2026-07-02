@@ -421,6 +421,43 @@ public class FeatherHudRenderer {
             context.fill(ix, iy, ix + 2, iy + 14, cfg.themeColor);
             context.drawText(tr, "Held: " + count, ix + 6, iy + 3, 0xFFFFFFFF, false);
         }
+
+        // 15. Target HUD (Damage Indicator)
+        if (cfg.damageIndicator) {
+            net.minecraft.entity.Entity targeted = client.targetedEntity;
+            boolean isPreview = client.currentScreen instanceof net.featherpojav.client.gui.FeatherHudEditorScreen;
+            
+            if (targeted instanceof net.minecraft.entity.LivingEntity || isPreview) {
+                int tx = cfg.targetHudX;
+                int ty = cfg.targetHudY;
+                int tw = 120;
+                int th = 36;
+                
+                String name = isPreview ? "Target Preview" : targeted.getName().getString();
+                float health = isPreview ? 14.5f : ((net.minecraft.entity.LivingEntity) targeted).getHealth();
+                float maxHealth = isPreview ? 20.0f : ((net.minecraft.entity.LivingEntity) targeted).getMaxHealth();
+                
+                // Draw translucent target card container
+                context.fill(tx, ty, tx + tw, ty + th, 0x80000000);
+                context.fill(tx, ty, tx + 2, ty + th, cfg.themeColor);
+                
+                // Entity name text
+                context.drawText(tr, name, tx + 6, ty + 4, 0xFFFFFFFF, false);
+                
+                // Red/dark health bar background
+                int barWidth = tw - 12;
+                int barHeight = 4;
+                int fillWidth = (int) (barWidth * (health / maxHealth));
+                fillWidth = Math.max(0, Math.min(barWidth, fillWidth));
+                
+                context.fill(tx + 6, ty + 16, tx + 6 + barWidth, ty + 16 + barHeight, 0xFF444444);
+                context.fill(tx + 6, ty + 16, tx + 6 + fillWidth, ty + 16 + barHeight, 0xFFFF2222);
+                
+                // Health value text
+                String hpText = String.format("HP: %.1f / %.0f", health, maxHealth);
+                context.drawText(tr, hpText, tx + 6, ty + 23, 0xFFBA68C8, false);
+            }
+        }
     }
 
     private static void drawKey(DrawContext context, TextRenderer tr, String label, int x, int y, int w, int h, boolean pressed) {

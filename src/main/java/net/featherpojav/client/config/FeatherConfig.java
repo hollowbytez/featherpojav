@@ -92,6 +92,8 @@ public class FeatherConfig {
     public boolean packOrganizer = false;
     public boolean soundFilters = false;
     public boolean itemPhysics = true;
+    public boolean lowFire = true;
+    public boolean hurtCam = true;
 
     // Custom mod details
     public String autoTextCommand = "/lobby";
@@ -116,6 +118,9 @@ public class FeatherConfig {
     
     public int fpsHUDX = 10;
     public int fpsHUDY = 50;
+    
+    public int targetHudX = 10;
+    public int targetHudY = 110;
 
     public int comboDisplayX = 10;
     public int comboDisplayY = 70;

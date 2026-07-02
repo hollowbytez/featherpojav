@@ -62,7 +62,8 @@ public class FeatherHudEditorScreen extends Screen {
             new HudElement("Speed Meter", () -> cfg.speedMeterX, (x) -> cfg.speedMeterX = x, () -> cfg.speedMeterY, (y) -> cfg.speedMeterY = y, () -> cfg.speedMeter, 85, 14),
             new HudElement("Stopwatch", () -> cfg.stopwatchX, (x) -> cfg.stopwatchX = x, () -> cfg.stopwatchY, (y) -> cfg.stopwatchY = y, () -> cfg.stopwatch, 95, 14),
             new HudElement("Item Counter", () -> cfg.itemCounterX, (x) -> cfg.itemCounterX = x, () -> cfg.itemCounterY, (y) -> cfg.itemCounterY = y, () -> cfg.itemCounter, 65, 14),
-            new HudElement("Pack Display", () -> cfg.packDisplayX, (x) -> cfg.packDisplayX = x, () -> cfg.packDisplayY, (y) -> cfg.packDisplayY = y, () -> cfg.packDisplay, 110, 14)
+            new HudElement("Pack Display", () -> cfg.packDisplayX, (x) -> cfg.packDisplayX = x, () -> cfg.packDisplayY, (y) -> cfg.packDisplayY = y, () -> cfg.packDisplay, 110, 14),
+            new HudElement("Target HUD", () -> cfg.targetHudX, (x) -> cfg.targetHudX = x, () -> cfg.targetHudY, (y) -> cfg.targetHudY = y, () -> cfg.damageIndicator, 120, 36)
         };
         
         // Return button
