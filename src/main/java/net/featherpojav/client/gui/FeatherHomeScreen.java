@@ -95,11 +95,8 @@ public class FeatherHomeScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Draw fallback panorama background
-        this.renderBackground(context, mouseX, mouseY, delta);
-
-        // Dark grey atmospheric overlay matching the reference image
-        context.fill(0, 0, this.width, this.height, 0xD0101012);
+        // Draw custom dark violet gradient background (completely eliminates background blur!)
+        context.fillGradient(0, 0, this.width, this.height, 0xFF120E1C, 0xFF050508);
 
         // --- Render Center Header & Brand ---
         int centerY = this.height / 2 - 120;
