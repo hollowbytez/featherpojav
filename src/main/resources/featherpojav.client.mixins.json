@@ -1,0 +1,17 @@
+{
+	"required": true,
+	"package": "net.featherpojav.mixin.client",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"MinecraftClientMixin",
+		"InGameHudMixin",
+		"GameRendererMixin",
+		"KeyboardMixin",
+		"ItemEntityRendererMixin",
+		"MouseMixin",
+		"CameraMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
