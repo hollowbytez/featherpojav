@@ -114,7 +114,7 @@ public class FeatherHudRenderer {
 
     public static void renderHUD(DrawContext context, float tickDelta) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || client.options.hudHidden) return;
+        if (client.player == null || client.options.hudHidden || client.currentScreen != null) return;
         
         TextRenderer tr = client.textRenderer;
         FeatherConfig cfg = FeatherConfig.INSTANCE;
@@ -457,6 +457,40 @@ public class FeatherHudRenderer {
                 String hpText = String.format("HP: %.1f / %.0f", health, maxHealth);
                 context.drawText(tr, hpText, tx + 6, ty + 23, 0xFFBA68C8, false);
             }
+        }
+
+        // 16. Totem Counter
+        if (cfg.totemCounter) {
+            int tx = cfg.totemCounterX;
+            int ty = cfg.totemCounterY;
+            int totems = 0;
+            if (client.player != null) {
+                for (int i = 0; i < client.player.getInventory().size(); i++) {
+                    ItemStack stack = client.player.getInventory().getStack(i);
+                    if (stack.getItem() == net.minecraft.item.Items.TOTEM_OF_UNDYING) {
+                        totems += stack.getCount();
+                    }
+                }
+                if (client.player.getOffHandStack().getItem() == net.minecraft.item.Items.TOTEM_OF_UNDYING) {
+                    totems += client.player.getOffHandStack().getCount();
+                }
+            }
+            context.fill(tx, ty, tx + 65, ty + 14, 0x80000000);
+            context.fill(tx, ty, tx + 2, ty + 14, cfg.themeColor);
+            context.drawText(tr, "Totems: " + totems, tx + 6, ty + 3, 0xFFFFFFFF, false);
+        }
+
+        // 17. Saturation HUD
+        if (cfg.saturationHUD) {
+            int sx = cfg.saturationHUDX;
+            int sy = cfg.saturationHUDY;
+            float saturation = 0.0f;
+            if (client.player != null) {
+                saturation = client.player.getHungerManager().getSaturationLevel();
+            }
+            context.fill(sx, sy, sx + 80, sy + 14, 0x80000000);
+            context.fill(sx, sy, sx + 2, sy + 14, cfg.themeColor);
+            context.drawText(tr, String.format("Sat: %.1f", saturation), sx + 6, sy + 3, 0xFFFFFFFF, false);
         }
     }
 

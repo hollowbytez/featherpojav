@@ -63,7 +63,9 @@ public class FeatherHudEditorScreen extends Screen {
             new HudElement("Stopwatch", () -> cfg.stopwatchX, (x) -> cfg.stopwatchX = x, () -> cfg.stopwatchY, (y) -> cfg.stopwatchY = y, () -> cfg.stopwatch, 95, 14),
             new HudElement("Item Counter", () -> cfg.itemCounterX, (x) -> cfg.itemCounterX = x, () -> cfg.itemCounterY, (y) -> cfg.itemCounterY = y, () -> cfg.itemCounter, 65, 14),
             new HudElement("Pack Display", () -> cfg.packDisplayX, (x) -> cfg.packDisplayX = x, () -> cfg.packDisplayY, (y) -> cfg.packDisplayY = y, () -> cfg.packDisplay, 110, 14),
-            new HudElement("Target HUD", () -> cfg.targetHudX, (x) -> cfg.targetHudX = x, () -> cfg.targetHudY, (y) -> cfg.targetHudY = y, () -> cfg.damageIndicator, 120, 36)
+            new HudElement("Target HUD", () -> cfg.targetHudX, (x) -> cfg.targetHudX = x, () -> cfg.targetHudY, (y) -> cfg.targetHudY = y, () -> cfg.damageIndicator, 120, 36),
+            new HudElement("Totem Counter", () -> cfg.totemCounterX, (x) -> cfg.totemCounterX = x, () -> cfg.totemCounterY, (y) -> cfg.totemCounterY = y, () -> cfg.totemCounter, 65, 14),
+            new HudElement("Saturation HUD", () -> cfg.saturationHUDX, (x) -> cfg.saturationHUDX = x, () -> cfg.saturationHUDY, (y) -> cfg.saturationHUDY = y, () -> cfg.saturationHUD, 80, 14)
         };
         
         // Return button

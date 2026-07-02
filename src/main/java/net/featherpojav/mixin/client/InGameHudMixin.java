@@ -15,6 +15,16 @@ import net.minecraft.client.MinecraftClient;
 @Mixin(InGameHud.class)
 public class InGameHudMixin {
 
+    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
+    private void onRender(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.currentScreen instanceof net.featherpojav.client.gui.FeatherSettingsScreen ||
+            client.currentScreen instanceof net.featherpojav.client.gui.FeatherGameMenuScreen ||
+            client.currentScreen instanceof net.featherpojav.client.gui.FeatherHudEditorScreen) {
+            ci.cancel();
+        }
+    }
+
     @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
     private void onRenderCrosshair(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         if (FeatherConfig.INSTANCE.customCrosshair) {

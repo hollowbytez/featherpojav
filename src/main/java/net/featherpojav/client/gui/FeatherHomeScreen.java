@@ -115,11 +115,12 @@ public class FeatherHomeScreen extends Screen {
         // Dark grey atmospheric overlay for visual contrast (D0 is 80% opacity)
         context.fill(0, 0, this.width, this.height, 0xD0101012);
 
-        // --- Render Center Header & Brand ---
-        int centerY = this.height / 2 - 110;
-        Identifier logoId = Identifier.of("featherpojav", "icon.png");
-        context.drawTexture(logoId, this.width / 2 - 60, centerY, 0.0f, 0.0f, 20, 20, 96, 96);
-        context.drawText(this.textRenderer, "FEATHER CLIENT", this.width / 2 - 35, centerY + 6, 0xFFFFFFFF, true);
+        // --- Render Center Header & Brand (using new custom title logo) ---
+        int centerY = this.height / 2 - 115;
+        int logoW = 160;
+        int logoH = 45;
+        Identifier logoId = Identifier.of("featherpojav", "textures/title.png");
+        context.drawTexture(logoId, this.width / 2 - logoW / 2, centerY - 20, 0.0f, 0.0f, logoW, logoH, logoW, logoH);
 
         // --- Render Center Main Buttons ---
         int buttonY = centerY + 30;

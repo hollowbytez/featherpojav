@@ -77,7 +77,10 @@ public class FeatherConfig {
     public boolean colorSaturation = false;
     public boolean customCrosshair = false;
     public boolean customF3 = false;
-    public boolean damageIndicator = false;
+    public boolean damageIndicator = true;
+    public boolean crystalOptimizer = true;
+    public boolean totemCounter = true;
+    public boolean saturationHUD = true;
     public boolean darkMode = false;
     public boolean discordRPC = false;
     public boolean glint = false;
@@ -121,6 +124,12 @@ public class FeatherConfig {
     
     public int targetHudX = 10;
     public int targetHudY = 110;
+
+    public int totemCounterX = 10;
+    public int totemCounterY = 330;
+
+    public int saturationHUDX = 10;
+    public int saturationHUDY = 350;
 
     public int comboDisplayX = 10;
     public int comboDisplayY = 70;

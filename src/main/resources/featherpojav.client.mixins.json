@@ -15,7 +15,8 @@
 		"BossBarHudMixin",
 		"LightmapTextureManagerMixin",
 		"LightmapTextureManagerAccessor",
-		"InGameOverlayRendererMixin"
+		"InGameOverlayRendererMixin",
+		"ClientPlayerInteractionManagerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
