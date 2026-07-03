@@ -77,10 +77,8 @@ public class FeatherGameMenuScreen extends Screen {
         buttons.add(new MenuButton("🪶", "Feather Settings", false, () -> {
             if (this.client != null) this.client.setScreen(new FeatherSettingsScreen(this));
         }));
-        buttons.add(new MenuButton("🛒", "STORE", true, () -> {
-            // Mock opening Feather Store
-            Util.getOperatingSystem().open("https://store.feather.gg");
-        }));
+
+
         buttons.add(new MenuButton("⚙", "Options", false, () -> {
             if (this.client != null) this.client.setScreen(new OptionsScreen(this, this.client.options));
         }));

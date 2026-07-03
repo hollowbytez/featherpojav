@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 
 import java.util.ArrayList;
@@ -21,13 +22,12 @@ public class FeatherSettingsScreen extends Screen {
     private final List<ModCard> cards = new ArrayList<>();
     private TextFieldWidget searchField;
     
-    // Geometry
-    private int boxWidth = 340;
-    private int boxHeight = 240;
-    private int boxX = 0;
-    private int boxY = 0;
+    // Full-screen layout geometry
+    private int panelX, panelY, panelW, panelH;
+    private int headerH = 28;
+    private int tabBarH = 20;
     
-    // Scroll state
+    // Scroll
     private double scrollY = 0;
     
     public FeatherSettingsScreen(Screen parent) {
@@ -37,9 +37,9 @@ public class FeatherSettingsScreen extends Screen {
     
     enum Category {
         ALL("All"),
-        PVP("PvP"),
+        NEW("New"),
         HUD("HUD"),
-        NEW("New");
+        PVP("PvP");
         
         final String name;
         Category(String name) { this.name = name; }
@@ -69,19 +69,21 @@ public class FeatherSettingsScreen extends Screen {
     
     @Override
     protected void init() {
-        boxWidth = Math.min(340, this.width - 20);
-        boxHeight = Math.min(240, this.height - 20);
-        boxX = this.width / 2 - boxWidth / 2;
-        boxY = this.height / 2 - boxHeight / 2;
+        // Full-screen panel with margins
+        int margin = 10;
+        panelX = margin;
+        panelY = margin;
+        panelW = this.width - margin * 2;
+        panelH = this.height - margin * 2;
 
-        int searchX = boxX + boxWidth - 120;
-        int searchY = boxY + 8;
-        int searchW = 100;
-        int searchH = 12;
-        this.searchField = new TextFieldWidget(this.textRenderer, searchX, searchY, searchW, searchH, Text.of("Search"));
+        // Search field in header area
+        int searchW = Math.min(120, panelW / 4);
+        int searchX = panelX + panelW - searchW - 50;
+        int searchY = panelY + 8;
+        this.searchField = new TextFieldWidget(this.textRenderer, searchX, searchY, searchW, 12, Text.of("Search"));
         this.searchField.setMaxLength(30);
         this.searchField.setDrawsBackground(false);
-        this.searchField.setPlaceholder(Text.of("Search..."));
+        this.searchField.setPlaceholder(Text.of("Search"));
         this.searchField.setEditableColor(0xFFFFFFFF);
         this.searchField.setUneditableColor(0xFF888888);
         this.addSelectableChild(this.searchField);
@@ -170,14 +172,26 @@ public class FeatherSettingsScreen extends Screen {
         return list;
     }
 
+    // ===== Number of columns for the card grid =====
+    private int getColumns() {
+        if (panelW > 500) return 4;
+        if (panelW > 350) return 3;
+        return 2;
+    }
+
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (mouseX >= boxX && mouseX <= boxX + boxWidth && mouseY >= boxY + 52 && mouseY <= boxY + boxHeight) {
+        int cardAreaY = panelY + headerH + tabBarH + 4;
+        int cardAreaH = panelH - headerH - tabBarH - 8;
+        if (mouseX >= panelX && mouseX <= panelX + panelW && mouseY >= cardAreaY && mouseY <= cardAreaY + cardAreaH) {
+            int cols = getColumns();
+            int cardH = getCardHeight();
+            int gap = 4;
             int itemsCount = getFilteredCards().size();
-            int rowsCount = (itemsCount + 1) / 2;
-            int totalHeight = rowsCount * 30;
-            double maxScroll = Math.max(0, totalHeight - (boxHeight - 60));
-            scrollY -= verticalAmount * 18;
+            int rowsCount = (itemsCount + cols - 1) / cols;
+            int totalHeight = rowsCount * (cardH + gap);
+            double maxScroll = Math.max(0, totalHeight - cardAreaH);
+            scrollY -= verticalAmount * 20;
             if (scrollY < 0) scrollY = 0;
             if (scrollY > maxScroll) scrollY = maxScroll;
             return true;
@@ -185,140 +199,181 @@ public class FeatherSettingsScreen extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
+    private int getCardHeight() {
+        return Math.max(60, Math.min(80, (panelH - headerH - tabBarH - 40) / 3));
+    }
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Subtle darkened background
-        context.fill(0, 0, this.width, this.height, 0x70000000);
+        // Darkened game background
+        context.fill(0, 0, this.width, this.height, 0x90000000);
 
-        // --- Main container with subtle border ---
-        context.fill(boxX, boxY, boxX + boxWidth, boxY + boxHeight, 0xF0111113);
-        // Top accent line
-        context.fill(boxX, boxY, boxX + boxWidth, boxY + 1, 0xFF9C27B0);
+        // =========================================================
+        // HEADER BAR: Feather logo + "MOD MENU" + search + close
+        // =========================================================
+        int hY = panelY;
+        context.fill(panelX, hY, panelX + panelW, hY + headerH, 0xE0101014);
+        // Bottom border of header
+        context.fill(panelX, hY + headerH - 1, panelX + panelW, hY + headerH, 0xFF222226);
 
-        // --- Header Row: Title + Search + Close ---
-        int headerY = boxY + 6;
-        context.drawText(this.textRenderer, "⚙ Mods", boxX + 10, headerY + 2, 0xFFE0E0E0, false);
+        // Feather icon (small)
+        Identifier iconId = Identifier.of("featherpojav", "icon.png");
+        context.drawTexture(iconId, panelX + 6, hY + 4, 0.0f, 0.0f, 20, 20, 500, 500);
 
-        // Search field
+        // "MOD MENU" text next to icon
+        context.drawText(this.textRenderer, "MOD MENU", panelX + 30, hY + 10, 0xFFFFFFFF, true);
+
+        // "FeatherClient" stylized text branding in header center
+        String brandText = "F E A T H E R C L I E N T";
+        int brandW = this.textRenderer.getWidth(brandText);
+        int brandX = panelX + panelW / 2 - brandW / 2;
+        context.drawText(this.textRenderer, brandText, brandX, hY + 10, 0xFF9C27B0, true);
+
+        // Search field background + render
         if (this.searchField != null) {
             int sX = this.searchField.getX();
             int sY = this.searchField.getY();
             int sW = this.searchField.getWidth();
             int sH = this.searchField.getHeight();
-            context.fill(sX - 2, sY - 2, sX + sW + 2, sY + sH + 2, 0xFF1A1A1C);
-            context.drawBorder(sX - 2, sY - 2, sW + 4, sH + 4, this.searchField.isFocused() ? 0xFF9C27B0 : 0xFF2A2A2E);
+            context.fill(sX - 3, sY - 2, sX + sW + 3, sY + sH + 2, 0xFF1A1A1E);
+            context.drawBorder(sX - 3, sY - 2, sW + 6, sH + 4, this.searchField.isFocused() ? 0xFF9C27B0 : 0xFF333338);
             this.searchField.render(context, mouseX, mouseY, delta);
         }
 
-        // Close button
-        boolean closeHovered = mouseX >= boxX + boxWidth - 18 && mouseX <= boxX + boxWidth - 4 && mouseY >= headerY && mouseY <= headerY + 14;
-        context.drawText(this.textRenderer, "✕", boxX + boxWidth - 14, headerY + 2, closeHovered ? 0xFFE53935 : 0xFF666666, false);
+        // Close (X) button top-right
+        int closeX = panelX + panelW - 18;
+        int closeY = hY + 4;
+        boolean closeHovered = mouseX >= closeX - 2 && mouseX <= closeX + 14 && mouseY >= closeY && mouseY <= closeY + 20;
+        context.fill(closeX - 2, closeY, closeX + 14, closeY + 20, closeHovered ? 0xFFE53935 : 0xFF2A2A30);
+        context.drawCenteredTextWithShadow(this.textRenderer, "✕", closeX + 6, closeY + 6, 0xFFFFFFFF);
 
-        // --- Separator line ---
-        context.fill(boxX + 8, boxY + 22, boxX + boxWidth - 8, boxY + 23, 0xFF222224);
+        // =========================================================
+        // GREEN "MOD MENU" pill tab + category tabs
+        // =========================================================
+        int tabY = hY + headerH + 2;
+        context.fill(panelX, tabY - 2, panelX + panelW, tabY + tabBarH, 0xD0101014);
+        // Bottom border of tab bar
+        context.fill(panelX, tabY + tabBarH - 1, panelX + panelW, tabY + tabBarH, 0xFF1A1A1E);
 
-        // --- Category Tabs (minimalist underline style) ---
-        int tabY = boxY + 27;
-        int tabX = boxX + 10;
+        // Green "MOD MENU" pill on the left
+        int pillW = 70;
+        int pillH = 16;
+        int pillX = panelX + 8;
+        int pillY = tabY + 1;
+        context.fill(pillX, pillY, pillX + pillW, pillY + pillH, 0xFF2E7D32);
+        context.drawCenteredTextWithShadow(this.textRenderer, "🪶 MOD MENU", pillX + pillW / 2, pillY + 4, 0xFFFFFFFF);
+
+        // Category tabs: All, New, HUD, PvP
+        int catTabX = pillX + pillW + 10;
         for (Category cat : Category.values()) {
             boolean active = cat == currentCategory;
-            int tw = this.textRenderer.getWidth(cat.name) + 10;
-            boolean hovered = mouseX >= tabX && mouseX <= tabX + tw && mouseY >= tabY && mouseY <= tabY + 16;
+            int tw = this.textRenderer.getWidth(cat.name) + 14;
+            boolean hovered = mouseX >= catTabX && mouseX <= catTabX + tw && mouseY >= pillY && mouseY <= pillY + pillH;
 
-            int textColor = active ? 0xFFE1BEE7 : (hovered ? 0xFFCCCCCC : 0xFF888888);
-            context.drawCenteredTextWithShadow(this.textRenderer, cat.name, tabX + tw / 2, tabY + 3, textColor);
             if (active) {
-                context.fill(tabX + 2, tabY + 14, tabX + tw - 2, tabY + 16, 0xFF9C27B0);
+                context.fill(catTabX, pillY, catTabX + tw, pillY + pillH, 0xFF9C27B0);
+            } else if (hovered) {
+                context.fill(catTabX, pillY, catTabX + tw, pillY + pillH, 0xFF2A2A30);
             }
-            tabX += tw + 4;
+            context.drawCenteredTextWithShadow(this.textRenderer, cat.name, catTabX + tw / 2, pillY + 4, active ? 0xFFFFFFFF : 0xFFAAAAAA);
+            catTabX += tw + 4;
         }
 
-        // HUD Layout button (right-aligned)
+        // HUD Layout button (right side of tab bar)
         int hudBtnW = 70;
-        int hudBtnX = boxX + boxWidth - hudBtnW - 10;
-        boolean hudHovered = mouseX >= hudBtnX && mouseX <= hudBtnX + hudBtnW && mouseY >= tabY && mouseY <= tabY + 16;
-        context.fill(hudBtnX, tabY, hudBtnX + hudBtnW, tabY + 16, hudHovered ? 0xFF1E1E22 : 0x00000000);
-        context.drawCenteredTextWithShadow(this.textRenderer, "📐 Layout", hudBtnX + hudBtnW / 2, tabY + 3, hudHovered ? 0xFFE1BEE7 : 0xFF9C27B0);
+        int hudBtnX = panelX + panelW - hudBtnW - 8;
+        boolean hudHovered = mouseX >= hudBtnX && mouseX <= hudBtnX + hudBtnW && mouseY >= pillY && mouseY <= pillY + pillH;
+        context.fill(hudBtnX, pillY, hudBtnX + hudBtnW, pillY + pillH, hudHovered ? 0xFF333338 : 0xFF1E1E22);
+        context.drawCenteredTextWithShadow(this.textRenderer, "📐 Layout", hudBtnX + hudBtnW / 2, pillY + 4, hudHovered ? 0xFFE1BEE7 : 0xFF888888);
 
-        // --- Separator ---
-        context.fill(boxX + 8, boxY + 47, boxX + boxWidth - 8, boxY + 48, 0xFF1A1A1C);
+        // =========================================================
+        // CARD GRID (4 columns like reference, large cards)
+        // =========================================================
+        int cardAreaY = tabY + tabBarH + 4;
+        int cardAreaH = panelH - headerH - tabBarH - 8;
+        int cols = getColumns();
+        int gap = 4;
+        int cardW = (panelW - (cols + 1) * gap) / cols;
+        int cardH = getCardHeight();
 
-        // --- Card Grid (2 columns, clean rows) ---
-        int cardAreaY = boxY + 52;
-        int cardAreaH = boxHeight - 58;
-        int cardW = (boxWidth - 28) / 2;
-        int cardH = 26;
-        int cardGap = 3;
-
-        context.enableScissor(boxX + 4, cardAreaY, boxX + boxWidth - 4, cardAreaY + cardAreaH);
+        context.enableScissor(panelX, cardAreaY, panelX + panelW, cardAreaY + cardAreaH);
 
         List<ModCard> filtered = getFilteredCards();
         int index = 0;
         for (ModCard card : filtered) {
-            int col = index % 2;
-            int row = index / 2;
+            int col = index % cols;
+            int row = index / cols;
 
-            int cX = boxX + 8 + col * (cardW + cardGap + 4);
-            int cY = cardAreaY + 4 + row * (cardH + cardGap) - (int) scrollY;
+            int cX = panelX + gap + col * (cardW + gap);
+            int cY = cardAreaY + row * (cardH + gap) - (int) scrollY;
 
             if (cY + cardH >= cardAreaY && cY <= cardAreaY + cardAreaH) {
                 boolean enabled = card.getter.getAsBoolean();
                 boolean cardHovered = mouseX >= cX && mouseX <= cX + cardW && mouseY >= cY && mouseY <= cY + cardH;
 
-                // Card background
-                int cardBg = cardHovered ? 0xFF1C1C20 : 0xFF151517;
+                // Card background (dark rounded-look box)
+                int cardBg = cardHovered ? 0xFF222228 : 0xFF18181C;
                 context.fill(cX, cY, cX + cardW, cY + cardH, cardBg);
-                // Left accent strip
-                context.fill(cX, cY, cX + 2, cY + cardH, enabled ? 0xFF9C27B0 : 0xFF333336);
+                context.drawBorder(cX, cY, cardW, cardH, 0xFF2A2A30);
 
-                // Icon
-                context.drawText(this.textRenderer, card.icon, cX + 6, cY + 9, 0xFFCCCCCC, false);
-
-                // Name
-                String displayName = card.name;
-                if (displayName.length() > 15) displayName = displayName.substring(0, 13) + "..";
-                context.drawText(this.textRenderer, displayName, cX + 22, cY + 9, enabled ? 0xFFE0E0E0 : 0xFF888888, false);
-
-                // Gear icon (if configurable)
-                if (card.onConfigure != null) {
-                    boolean gearHovered = mouseX >= cX + cardW - 28 && mouseX <= cX + cardW - 16 && mouseY >= cY + 4 && mouseY <= cY + cardH - 4;
-                    context.drawText(this.textRenderer, "⚙", cX + cardW - 26, cY + 9, gearHovered ? 0xFFE1BEE7 : 0xFF555555, false);
+                // "NEW" badge top-left (for NEW category cards)
+                if (card.category == Category.NEW) {
+                    context.fill(cX + 3, cY + 3, cX + 25, cY + 13, 0xFF2E7D32);
+                    context.drawText(this.textRenderer, "NEW", cX + 5, cY + 4, 0xFFFFFFFF, false);
                 }
 
-                // Toggle pill switch
-                int pillW = 18;
-                int pillH = 10;
-                int pillX = cX + cardW - pillW - 4;
-                int pillY = cY + (cardH - pillH) / 2;
-                boolean pillHovered = mouseX >= pillX && mouseX <= pillX + pillW && mouseY >= pillY && mouseY <= pillY + pillH;
+                // Card name at top center
+                String displayName = card.name;
+                int nameW = this.textRenderer.getWidth(displayName);
+                if (nameW > cardW - 8) {
+                    // Truncate
+                    while (this.textRenderer.getWidth(displayName + "..") > cardW - 8 && displayName.length() > 3) {
+                        displayName = displayName.substring(0, displayName.length() - 1);
+                    }
+                    displayName = displayName + "..";
+                }
+                context.drawCenteredTextWithShadow(this.textRenderer, displayName, cX + cardW / 2, cY + 4, 0xFFDDDDDD);
 
-                int pillBg = enabled ? 0xFF7B1FA2 : 0xFF333336;
-                if (pillHovered) pillBg = enabled ? 0xFF9C27B0 : 0xFF444448;
-                context.fill(pillX, pillY, pillX + pillW, pillY + pillH, pillBg);
-                // Knob
-                int knobX = enabled ? pillX + pillW - 6 : pillX + 2;
-                context.fill(knobX, pillY + 2, knobX + 4, pillY + pillH - 2, 0xFFE0E0E0);
+                // Settings gear icon top-right (if configurable)
+                if (card.onConfigure != null) {
+                    boolean gearHovered = mouseX >= cX + cardW - 14 && mouseX <= cX + cardW - 2 && mouseY >= cY + 2 && mouseY <= cY + 14;
+                    context.drawText(this.textRenderer, "⚙", cX + cardW - 13, cY + 4, gearHovered ? 0xFFE1BEE7 : 0xFF666666, false);
+                }
+
+                // Large centered icon
+                int iconY = cY + 16;
+                int iconAreaH = cardH - 34;
+                context.drawCenteredTextWithShadow(this.textRenderer, card.icon, cX + cardW / 2, iconY + iconAreaH / 2 - 4, 0xFFCCCCCC);
+
+                // Toggle button at bottom center
+                int btnW = Math.min(60, cardW - 10);
+                int btnH = 14;
+                int btnX = cX + cardW / 2 - btnW / 2;
+                int btnY = cY + cardH - btnH - 4;
+                boolean btnHovered = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
+
+                if (enabled) {
+                    int bg = btnHovered ? 0xFF388E3C : 0xFF2E7D32;
+                    context.fill(btnX, btnY, btnX + btnW, btnY + btnH, bg);
+                    context.drawCenteredTextWithShadow(this.textRenderer, "Enabled", btnX + btnW / 2, btnY + 3, 0xFFFFFFFF);
+                } else {
+                    int bg = btnHovered ? 0xFF333338 : 0xFF252528;
+                    context.fill(btnX, btnY, btnX + btnW, btnY + btnH, bg);
+                    context.drawCenteredTextWithShadow(this.textRenderer, "Disabled", btnX + btnW / 2, btnY + 3, 0xFF888888);
+                }
             }
             index++;
         }
 
         context.disableScissor();
 
-        // --- Scrollbar ---
-        int rowsCount = (filtered.size() + 1) / 2;
-        int totalHeight = rowsCount * (cardH + cardGap);
+        // Scrollbar
+        int rowsCount = (filtered.size() + cols - 1) / cols;
+        int totalHeight = rowsCount * (cardH + gap);
         if (totalHeight > cardAreaH) {
-            int scrollBarH = Math.max(12, (int) (((double) cardAreaH / totalHeight) * cardAreaH));
+            int scrollBarH = Math.max(15, (int) (((double) cardAreaH / totalHeight) * cardAreaH));
             int scrollBarY = cardAreaY + (int) ((scrollY / (totalHeight - cardAreaH)) * (cardAreaH - scrollBarH));
-            context.fill(boxX + boxWidth - 5, scrollBarY, boxX + boxWidth - 2, scrollBarY + scrollBarH, 0xFF333336);
-        }
-
-        // --- Bottom status bar ---
-        int statusY = boxY + boxHeight - 3;
-        context.fill(boxX, statusY, boxX + boxWidth, statusY + 3, 0xFF111113);
-        int enabledCount = 0;
-        for (ModCard c : filtered) {
-            if (c.getter.getAsBoolean()) enabledCount++;
+            context.fill(panelX + panelW - 4, scrollBarY, panelX + panelW - 1, scrollBarY + scrollBarH, 0xFF444448);
         }
 
         super.render(context, mouseX, mouseY, delta);
@@ -326,17 +381,19 @@ public class FeatherSettingsScreen extends Screen {
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int headerY = boxY + 6;
+        int hY = panelY;
 
         // Close button
-        if (mouseX >= boxX + boxWidth - 18 && mouseX <= boxX + boxWidth - 4 && mouseY >= headerY && mouseY <= headerY + 14) {
+        int closeX = panelX + panelW - 18;
+        int closeY = hY + 4;
+        if (mouseX >= closeX - 2 && mouseX <= closeX + 14 && mouseY >= closeY && mouseY <= closeY + 20) {
             this.close();
             return true;
         }
 
         // Search field focus
         if (this.searchField != null) {
-            boolean clicked = mouseX >= this.searchField.getX() - 2 && mouseX <= this.searchField.getX() + this.searchField.getWidth() + 2
+            boolean clicked = mouseX >= this.searchField.getX() - 3 && mouseX <= this.searchField.getX() + this.searchField.getWidth() + 3
                            && mouseY >= this.searchField.getY() - 2 && mouseY <= this.searchField.getY() + this.searchField.getHeight() + 2;
             this.searchField.setFocused(clicked);
             if (clicked && button == 1) {
@@ -345,22 +402,27 @@ public class FeatherSettingsScreen extends Screen {
         }
 
         // Category tabs
-        int tabY = boxY + 27;
-        int tabX = boxX + 10;
+        int tabY = hY + headerH + 2;
+        int pillW = 70;
+        int pillH = 16;
+        int pillXPos = panelX + 8;
+        int pillY = tabY + 1;
+
+        int catTabX = pillXPos + pillW + 10;
         for (Category cat : Category.values()) {
-            int tw = this.textRenderer.getWidth(cat.name) + 10;
-            if (mouseX >= tabX && mouseX <= tabX + tw && mouseY >= tabY && mouseY <= tabY + 16) {
+            int tw = this.textRenderer.getWidth(cat.name) + 14;
+            if (mouseX >= catTabX && mouseX <= catTabX + tw && mouseY >= pillY && mouseY <= pillY + pillH) {
                 currentCategory = cat;
                 scrollY = 0;
                 return true;
             }
-            tabX += tw + 4;
+            catTabX += tw + 4;
         }
 
         // HUD Layout button
         int hudBtnW = 70;
-        int hudBtnX = boxX + boxWidth - hudBtnW - 10;
-        if (mouseX >= hudBtnX && mouseX <= hudBtnX + hudBtnW && mouseY >= tabY && mouseY <= tabY + 16) {
+        int hudBtnX = panelX + panelW - hudBtnW - 8;
+        if (mouseX >= hudBtnX && mouseX <= hudBtnX + hudBtnW && mouseY >= pillY && mouseY <= pillY + pillH) {
             if (this.client != null) {
                 this.client.setScreen(new net.featherpojav.client.gui.FeatherHudEditorScreen(this));
             }
@@ -368,25 +430,26 @@ public class FeatherSettingsScreen extends Screen {
         }
 
         // Card interactions
-        int cardAreaY = boxY + 52;
-        int cardAreaH = boxHeight - 58;
-        int cardW = (boxWidth - 28) / 2;
-        int cardH = 26;
-        int cardGap = 3;
+        int cardAreaY = tabY + tabBarH + 4;
+        int cardAreaH = panelH - headerH - tabBarH - 8;
+        int cols = getColumns();
+        int gap = 4;
+        int cardW = (panelW - (cols + 1) * gap) / cols;
+        int cardH = getCardHeight();
 
         List<ModCard> filtered = getFilteredCards();
         int index = 0;
         for (ModCard card : filtered) {
-            int col = index % 2;
-            int row = index / 2;
+            int col = index % cols;
+            int row = index / cols;
 
-            int cX = boxX + 8 + col * (cardW + cardGap + 4);
-            int cY = cardAreaY + 4 + row * (cardH + cardGap) - (int) scrollY;
+            int cX = panelX + gap + col * (cardW + gap);
+            int cY = cardAreaY + row * (cardH + gap) - (int) scrollY;
 
             if (cY + cardH >= cardAreaY && cY <= cardAreaY + cardAreaH) {
                 boolean cardClicked = mouseX >= cX && mouseX <= cX + cardW && mouseY >= cY && mouseY <= cY + cardH;
 
-                // Right-click anywhere on card opens config
+                // Right-click opens config
                 if (cardClicked && button == 1 && card.onConfigure != null) {
                     card.onConfigure.run();
                     return true;
@@ -394,25 +457,25 @@ public class FeatherSettingsScreen extends Screen {
 
                 // Gear icon click
                 if (card.onConfigure != null) {
-                    if (mouseX >= cX + cardW - 28 && mouseX <= cX + cardW - 16 && mouseY >= cY + 4 && mouseY <= cY + cardH - 4) {
+                    if (mouseX >= cX + cardW - 14 && mouseX <= cX + cardW - 2 && mouseY >= cY + 2 && mouseY <= cY + 14) {
                         card.onConfigure.run();
                         return true;
                     }
                 }
 
-                // Toggle pill click
-                int pillW = 18;
-                int pillH = 10;
-                int pillX = cX + cardW - pillW - 4;
-                int pillY = cY + (cardH - pillH) / 2;
+                // Toggle button click
+                int btnW = Math.min(60, cardW - 10);
+                int btnH = 14;
+                int btnX = cX + cardW / 2 - btnW / 2;
+                int btnY = cY + cardH - btnH - 4;
 
-                if (mouseX >= pillX && mouseX <= pillX + pillW && mouseY >= pillY && mouseY <= pillY + pillH) {
+                if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
                     card.setter.accept(!card.getter.getAsBoolean());
                     FeatherConfig.save();
                     return true;
                 }
 
-                // Click anywhere on card to toggle
+                // Left click anywhere else on card also toggles
                 if (cardClicked && button == 0) {
                     card.setter.accept(!card.getter.getAsBoolean());
                     FeatherConfig.save();
@@ -427,7 +490,7 @@ public class FeatherSettingsScreen extends Screen {
     
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Do nothing to prevent background blur
+        // Do nothing - render game behind
     }
     
     @Override
@@ -476,20 +539,17 @@ class FeatherAutoTextScreen extends Screen {
         int cx = this.width / 2;
         int cy = this.height / 2;
 
-        // Centered input field for macro
         inputField = new TextFieldWidget(this.textRenderer, cx - 100, cy - 35, 200, 20, Text.of("Edit Macro Command"));
         inputField.setMaxLength(128);
         inputField.setText(FeatherConfig.INSTANCE.autoTextCommand);
         this.addSelectableChild(inputField);
 
-        // Keybind configuration button
         bindButton = ButtonWidget.builder(Text.of(getKeyNameText()), button -> {
             listening = true;
             button.setMessage(Text.of("Press any key..."));
         }).dimensions(cx - 100, cy - 5, 200, 20).build();
         this.addDrawableChild(bindButton);
 
-        // Save & Back button
         this.addDrawableChild(ButtonWidget.builder(Text.of("Save & Back"), button -> {
             FeatherConfig.INSTANCE.autoTextCommand = inputField.getText();
             FeatherConfig.save();
@@ -559,13 +619,11 @@ class FeatherTimeChangerScreen extends Screen {
         int leftX = this.width / 2 - 95;
         int startY = this.height / 2 - 35;
 
-        // Presets: Morning (0), Day (6000), Sunset (12000), Night (18000)
         this.addDrawableChild(ButtonWidget.builder(Text.of("Morning"), button -> setTime(0, 0)).dimensions(leftX, startY, 90, 20).build());
         this.addDrawableChild(ButtonWidget.builder(Text.of("Day"), button -> setTime(6000, 1)).dimensions(leftX + 100, startY, 90, 20).build());
         this.addDrawableChild(ButtonWidget.builder(Text.of("Sunset"), button -> setTime(12000, 2)).dimensions(leftX, startY + 25, 90, 20).build());
         this.addDrawableChild(ButtonWidget.builder(Text.of("Night"), button -> setTime(18000, 3)).dimensions(leftX + 100, startY + 25, 90, 20).build());
 
-        // Back button
         this.addDrawableChild(ButtonWidget.builder(Text.of("Back"), button -> {
             if (this.client != null) this.client.setScreen(parent);
         }).dimensions(this.width / 2 - 45, startY + 60, 90, 20).build());
@@ -653,23 +711,18 @@ class FeatherCrosshairScreen extends Screen {
         int leftX = this.width / 2 - 95;
         int startY = this.height / 2 - 40;
 
-        // Size adjustment
         this.addDrawableChild(ButtonWidget.builder(Text.of("Size +"), button -> adjustSize(0.5f)).dimensions(leftX, startY, 90, 20).build());
         this.addDrawableChild(ButtonWidget.builder(Text.of("Size -"), button -> adjustSize(-0.5f)).dimensions(leftX + 100, startY, 90, 20).build());
 
-        // Gap adjustment
         this.addDrawableChild(ButtonWidget.builder(Text.of("Gap +"), button -> adjustGap(0.5f)).dimensions(leftX, startY + 25, 90, 20).build());
         this.addDrawableChild(ButtonWidget.builder(Text.of("Gap -"), button -> adjustGap(-0.5f)).dimensions(leftX + 100, startY + 25, 90, 20).build());
 
-        // Thickness adjustment
         this.addDrawableChild(ButtonWidget.builder(Text.of("Thickness +"), button -> adjustTh(0.5f)).dimensions(leftX, startY + 50, 90, 20).build());
         this.addDrawableChild(ButtonWidget.builder(Text.of("Thickness -"), button -> adjustTh(-0.5f)).dimensions(leftX + 100, startY + 50, 90, 20).build());
 
-        // Preset and Color cycling
         this.addDrawableChild(ButtonWidget.builder(Text.of(getPresetButtonText()), button -> cyclePreset(button)).dimensions(leftX, startY + 75, 90, 20).build());
         this.addDrawableChild(ButtonWidget.builder(Text.of(getColorButtonText()), button -> cycleColor(button)).dimensions(leftX + 100, startY + 75, 90, 20).build());
 
-        // Back button
         this.addDrawableChild(ButtonWidget.builder(Text.of("Back"), button -> {
             if (this.client != null) this.client.setScreen(parent);
         }).dimensions(this.width / 2 - 45, startY + 105, 90, 20).build());
@@ -699,7 +752,6 @@ class FeatherCrosshairScreen extends Screen {
         String desc = String.format("Size: %.1f | Gap: %.1f | Thickness: %.1f", cfg.crosshairSize, cfg.crosshairGap, cfg.crosshairThickness);
         context.drawCenteredTextWithShadow(this.textRenderer, desc, this.width / 2, this.height / 2 - 60, 0xFFBA68C8);
         
-        // Render a preview of the crosshair in the center top
         int cx = this.width / 2;
         int cy = this.height / 2 - 100;
         float gap = cfg.crosshairGap;
@@ -713,11 +765,11 @@ class FeatherCrosshairScreen extends Screen {
         int h2 = t / 2 + (t % 2);
 
         switch (preset) {
-            case 1: // Dot
+            case 1:
                 context.fill(cx - h1, cy - h1, cx + h2, cy + h2, color);
                 break;
-            case 2: // Circle
-            case 3: // Circle with Dot
+            case 2:
+            case 3:
                 int radius = (int)(gap + size);
                 for (int angle = 0; angle < 360; angle += 10) {
                     double rad = Math.toRadians(angle);
@@ -729,12 +781,12 @@ class FeatherCrosshairScreen extends Screen {
                     context.fill(cx - h1, cy - h1, cx + h2, cy + h2, color);
                 }
                 break;
-            case 4: // T-Shape
+            case 4:
                 context.fill((int)(cx - gap - size), cy - h1, (int)(cx - gap), cy + h2, color);
                 context.fill((int)(cx + gap), cy - h1, (int)(cx + gap + size), cy + h2, color);
                 context.fill(cx - h1, (int)(cy + gap), cx + h2, (int)(cy + gap + size), color);
                 break;
-            case 5: // X-Shape
+            case 5:
                 for (int idx = 0; idx < (int) size; idx++) {
                     int f = (int)(gap + idx);
                     context.fill(cx - f - h1, cy - f - h1, cx - f + h2, cy - f + h2, color);
@@ -743,8 +795,8 @@ class FeatherCrosshairScreen extends Screen {
                     context.fill(cx + f - h1, cy + f - h1, cx + f + h2, cy + f + h2, color);
                 }
                 break;
-            case 6: // Square
-            case 9: // Box with Dot
+            case 6:
+            case 9:
                 int r = (int)(gap + size);
                 context.fill(cx - r, cy - r - h1, cx + r, cy - r + h2, color);
                 context.fill(cx - r, cy + r - h1, cx + r, cy + r + h2, color);
@@ -754,18 +806,18 @@ class FeatherCrosshairScreen extends Screen {
                     context.fill(cx - h1, cy - h1, cx + h2, cy + h2, color);
                 }
                 break;
-            case 7: // Arrow / Chevron
+            case 7:
                 for (int idx = 0; idx < (int) size; idx++) {
                     context.fill(cx - idx - h1, (int)(cy - gap + idx) - h1, cx - idx + h2, (int)(cy - gap + idx) + h2, color);
                     context.fill(cx + idx - h1, (int)(cy - gap + idx) - h1, cx + idx + h2, (int)(cy - gap + idx) + h2, color);
                 }
                 break;
-            case 8: // Tri-Bar
+            case 8:
                 context.fill((int)(cx - gap - size), cy - h1, (int)(cx - gap), cy + h2, color);
                 context.fill((int)(cx + gap), cy - h1, (int)(cx + gap + size), cy + h2, color);
                 context.fill(cx - h1, (int)(cy - gap - size), cx + h2, (int)(cy - gap), color);
                 break;
-            default: // 0: Classic Cross
+            default:
                 context.fill((int)(cx - gap - size), cy - h1, (int)(cx - gap), cy + h2, color);
                 context.fill((int)(cx + gap), cy - h1, (int)(cx + gap + size), cy + h2, color);
                 context.fill(cx - h1, (int)(cy - gap - size), cx + h2, (int)(cy - gap), color);

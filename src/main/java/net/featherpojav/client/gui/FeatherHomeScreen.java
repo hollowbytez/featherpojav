@@ -83,10 +83,7 @@ public class FeatherHomeScreen extends Screen {
             }));
         }
 
-        // 4. STORE
-        buttons.add(new MenuButton("🛒", "STORE", true, () -> {
-            Util.getOperatingSystem().open("https://store.feather.gg");
-        }));
+
 
         // Top Right Icon Shortcuts
         topIcons.add(new IconWidget("👁", "Toggle HUD", () -> {
