@@ -7,7 +7,7 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.texture.DynamicTexture;
+import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
@@ -39,7 +39,7 @@ public class RenderUtils {
             }
         }
         
-        DynamicTexture tex = new DynamicTexture(img);
+        NativeImageBackedTexture tex = new NativeImageBackedTexture(img);
         CIRCLE_TEX = Identifier.of("featherpojav", "circle_cache");
         MinecraftClient.getInstance().getTextureManager().registerTexture(CIRCLE_TEX, tex);
     }
