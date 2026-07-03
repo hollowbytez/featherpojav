@@ -1,7 +1,6 @@
 package net.featherpojav.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.CubeMapRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.RotatingCubeMapRenderer;
@@ -10,13 +9,11 @@ import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.screen.option.SkinOptionsScreen;
-import net.minecraft.client.gui.screen.option.LanguageOptionsScreen;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
-import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
 import net.minecraft.client.network.ServerAddress;
 import net.minecraft.client.network.ServerInfo;
@@ -61,28 +58,15 @@ public class FeatherHomeScreen extends Screen {
         ServerShortcut(String name, String ip, String initial) { this.name = name; this.ip = ip; this.initial = initial; }
     }
 
-    // Helper for rounded corners
-    private void fillRounded(DrawContext ctx, int x, int y, int w, int h, int color, int r) {
-        if (r < 2) { ctx.fill(x, y, x + w, y + h, color); return; }
-        ctx.fill(x + r, y, x + w - r, y + h, color);
-        ctx.fill(x, y + r, x + r, y + h - r, color);
-        ctx.fill(x + w - r, y + r, x + w, y + h - r, color);
-        ctx.fill(x + 1, y + 1, x + 2, y + 2, color);
-        ctx.fill(x + w - 2, y + 1, x + w - 1, y + 2, color);
-        ctx.fill(x + 1, y + h - 2, x + 2, y + h - 1, color);
-        ctx.fill(x + w - 2, y + h - 2, x + w - 1, y + h - 1, color);
-    }
-
     @Override
     protected void init() {
         centerButtons.clear();
         topIcons.clear();
         serverShortcuts.clear();
 
-        // Central Buttons
+        // Central Buttons (Removed Cosmetics)
         centerButtons.add(new MenuButton("Singleplayer", false, () -> { if (this.client != null) this.client.setScreen(new SelectWorldScreen(this)); }));
         centerButtons.add(new MenuButton("Multiplayer", false, () -> { if (this.client != null) this.client.setScreen(new MultiplayerScreen(this)); }));
-        centerButtons.add(new MenuButton("Cosmetics", false, () -> { Util.getOperatingSystem().open("https://github.com/hollowbytez"); }));
         centerButtons.add(new MenuButton("Screenshots", false, () -> { 
             if (this.client != null) {
                 File dir = new File(this.client.runDirectory, "screenshots");
@@ -95,7 +79,6 @@ public class FeatherHomeScreen extends Screen {
         // Top Right Actions
         topIcons.add(new IconWidget("⚙", () -> { if (this.client != null) this.client.setScreen(new OptionsScreen(this, this.client.options)); }));
         topIcons.add(new IconWidget("👕", () -> { if (this.client != null) this.client.setScreen(new SkinOptionsScreen(this, this.client.options)); }));
-        topIcons.add(new IconWidget("🌐", () -> { if (this.client != null) this.client.setScreen(new LanguageOptionsScreen(this, this.client.options, this.client.getLanguageManager())); }));
         
         // Left Sidebar Servers
         serverShortcuts.add(new ServerShortcut("PikaNetwork", "play.pikanetwork.net", "P"));
@@ -105,21 +88,24 @@ public class FeatherHomeScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Fix white hazy mask by resetting color and enabling blend cleanly
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
         
         this.panoramaRenderer.render(context, this.width, this.height, 1.0f, delta);
         
-        // Deep modern dark fade to remove white wash and make it look clean
-        context.fillGradient(0, 0, this.width, this.height, 0x90000000, 0xD0000000);
+        // Crisp dark gradient fade overlay
+        context.fillGradient(0, 0, this.width, this.height, 0xA0000000, 0xE0000000);
 
         // --- Render Top Right Profile Box ---
         if (this.client != null && this.client.getSession() != null) {
             int rightX = this.width - 200;
             int topY = 20;
 
-            // Profile rounded container
-            fillRounded(context, rightX, topY, 110, 36, 0xD9141416, 6);
+            // Smooth Rounded Profile Container
+            RenderUtils.drawRoundedRect(context.getMatrices(), rightX, topY, 110, 36, 6, 0xD9141416);
+            RenderUtils.drawRoundedOutline(context.getMatrices(), rightX, topY, 110, 36, 6, 1.0f, 0x30FFFFFF);
             
             try {
                 SkinTextures skinTextures = this.client.getSkinProvider().getSkinTextures(this.client.getGameProfile());
@@ -136,7 +122,8 @@ public class FeatherHomeScreen extends Screen {
             int iconX = rightX + 118;
             for (IconWidget iconBtn : topIcons) {
                 boolean hovered = mouseX >= iconX && mouseX <= iconX + 36 && mouseY >= topY && mouseY <= topY + 36;
-                fillRounded(context, iconX, topY, 36, 36, hovered ? 0xD92A2A2E : 0xD9141416, 6);
+                RenderUtils.drawRoundedRect(context.getMatrices(), iconX, topY, 36, 36, 6, hovered ? 0xD92A2A2E : 0xD9141416);
+                RenderUtils.drawRoundedOutline(context.getMatrices(), iconX, topY, 36, 36, 6, 1.0f, hovered ? 0x80FFFFFF : 0x30FFFFFF);
                 context.drawCenteredTextWithShadow(this.textRenderer, iconBtn.icon, iconX + 18, topY + 14, 0xFFFFFFFF);
                 iconX += 42;
             }
@@ -147,11 +134,12 @@ public class FeatherHomeScreen extends Screen {
         int sideX = 20;
         for (ServerShortcut sc : serverShortcuts) {
             boolean hov = mouseX >= sideX && mouseX <= sideX + 40 && mouseY >= sideY && mouseY <= sideY + 40;
-            fillRounded(context, sideX, sideY, 40, 40, hov ? 0xFF2A2A2E : 0xD9141416, 8); // Rounded square
+            RenderUtils.drawRoundedRect(context.getMatrices(), sideX, sideY, 40, 40, 20, hov ? 0xD92A2A2E : 0xD9141416);
+            RenderUtils.drawRoundedOutline(context.getMatrices(), sideX, sideY, 40, 40, 20, 1.0f, hov ? 0x80FFFFFF : 0x30FFFFFF);
             context.drawCenteredTextWithShadow(this.textRenderer, sc.initial, sideX + 20, sideY + 16, 0xFFFFFFFF);
             
             // Green online dot
-            fillRounded(context, sideX + 32, sideY + 32, 8, 8, 0xFF22C55E, 4);
+            RenderUtils.drawRoundedRect(context.getMatrices(), sideX + 30, sideY + 28, 10, 10, 5, 0xFF22C55E);
             
             if (hov) {
                 context.drawText(this.textRenderer, sc.name, sideX + 50, sideY + 16, 0xFFFFFFFF, true);
@@ -166,7 +154,10 @@ public class FeatherHomeScreen extends Screen {
         context.getMatrices().scale(3.0f, 3.0f, 1.0f);
         Text title = Text.literal("HOLLOW CLIENT").setStyle(Style.EMPTY.withFont(Identifier.of("featherpojav", "eternalo")));
         int tw = this.textRenderer.getWidth(title);
-        context.drawText(this.textRenderer, title, -tw / 2, 0, 0xFFFFFFFF, true);
+        // Shadow pass
+        context.drawText(this.textRenderer, title, -tw / 2 + 1, 1, 0x80000000, false);
+        // Main text
+        context.drawText(this.textRenderer, title, -tw / 2, 0, 0xFFFFFFFF, false);
         context.getMatrices().pop();
 
         // --- Render Main Center Buttons ---
@@ -178,14 +169,18 @@ public class FeatherHomeScreen extends Screen {
         for (MenuButton btn : centerButtons) {
             boolean hovered = mouseX >= leftX && mouseX <= leftX + buttonWidth && mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
             
-            int bg = btn.isAccent ? (hovered ? 0xFFE53935 : 0xFFEB4040) : (hovered ? 0xD92A2A2E : 0xD9141416);
-            fillRounded(context, leftX, buttonY, buttonWidth, buttonHeight, bg, 6);
+            int bg = btn.isAccent ? (hovered ? 0xD9E53935 : 0xD9EB4040) : (hovered ? 0xD92A2A2E : 0xD9141416);
+            int border = btn.isAccent ? (hovered ? 0xFFFFCDD2 : 0xFFFF8A80) : (hovered ? 0x80FFFFFF : 0x30FFFFFF);
+            
+            RenderUtils.drawRoundedRect(context.getMatrices(), leftX, buttonY, buttonWidth, buttonHeight, 8, bg);
+            RenderUtils.drawRoundedOutline(context.getMatrices(), leftX, buttonY, buttonWidth, buttonHeight, 8, 1.5f, border);
+            
             context.drawCenteredTextWithShadow(this.textRenderer, btn.label, this.width / 2, buttonY + 11, 0xFFFFFFFF);
             
-            buttonY += 36;
+            buttonY += 40;
         }
 
-        // Quit Button (Clean text only at bottom)
+        // Quit Game Button (Clean text only at bottom)
         int quitY = this.height - 30;
         boolean quitHovered = mouseX >= leftX && mouseX <= leftX + buttonWidth && mouseY >= quitY && mouseY <= quitY + 20;
         context.drawCenteredTextWithShadow(this.textRenderer, "Quit Game", this.width / 2, quitY, quitHovered ? 0xFFFF5555 : 0xFFAAAAAA);
@@ -212,7 +207,7 @@ public class FeatherHomeScreen extends Screen {
                 btn.onClick.run();
                 return true;
             }
-            buttonY += 36;
+            buttonY += 40;
         }
 
         // Top Right Icons

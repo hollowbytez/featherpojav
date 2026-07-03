@@ -80,33 +80,19 @@ public class FeatherSettingsScreen extends Screen {
     }
 
     // ===== Rounded rectangle helpers =====
-    // True rounded rect for transparency (draws multiple rects, ignores cornerColor)
+    // True rounded rect for transparency using RenderUtils anti-aliasing
     private void fillRounded(DrawContext ctx, int x, int y, int w, int h, int color, int cornerColor, int r) {
-        if (r < 2) {
-            ctx.fill(x, y, x + w, y + h, color);
-            return;
-        }
-        ctx.fill(x + r, y, x + w - r, y + h, color);
-        ctx.fill(x, y + r, x + r, y + h - r, color);
-        ctx.fill(x + w - r, y + r, x + w, y + h - r, color);
-        ctx.fill(x + 1, y + 1, x + 2, y + 2, color);
-        ctx.fill(x + w - 2, y + 1, x + w - 1, y + 2, color);
-        ctx.fill(x + 1, y + h - 2, x + 2, y + h - 1, color);
-        ctx.fill(x + w - 2, y + h - 2, x + w - 1, y + h - 1, color);
+        RenderUtils.drawRoundedRect(ctx.getMatrices(), x, y, w, h, r, color);
     }
     
     private void fillRoundedTop(DrawContext ctx, int x, int y, int w, int h, int color, int r) {
+        RenderUtils.drawRoundedRect(ctx.getMatrices(), x, y, w, h, r, color);
         ctx.fill(x, y + r, x + w, y + h, color);
-        ctx.fill(x + r, y, x + w - r, y + r, color);
-        ctx.fill(x + 1, y + 1, x + 2, y + 2, color);
-        ctx.fill(x + w - 2, y + 1, x + w - 1, y + 2, color);
     }
 
     private void fillRoundedBottom(DrawContext ctx, int x, int y, int w, int h, int color, int r) {
+        RenderUtils.drawRoundedRect(ctx.getMatrices(), x, y, w, h, r, color);
         ctx.fill(x, y, x + w, y + h - r, color);
-        ctx.fill(x + r, y + h - r, x + w - r, y + h, color);
-        ctx.fill(x + 1, y + h - 2, x + 2, y + h - 1, color);
-        ctx.fill(x + w - 2, y + h - 2, x + w - 1, y + h - 1, color);
     }
 
     @Override
