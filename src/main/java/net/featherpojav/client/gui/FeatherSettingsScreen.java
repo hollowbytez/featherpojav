@@ -22,22 +22,28 @@ public class FeatherSettingsScreen extends Screen {
     private final List<ModCard> cards = new ArrayList<>();
     private TextFieldWidget searchField;
 
-    // ===== Exact color palette from blueprint =====
-    private static final int BG_PANEL       = 0xFF16161A;  // Main panel background
-    private static final int BG_CARD        = 0xFF1F2026;  // Card background
-    private static final int ACCENT_RED     = 0xFFEB4040;  // Primary accent / selected tab
+    // ===== Exact color palette =====
+    private static final int BG_PANEL       = 0xFF141416;  // Solid opaque dark charcoal
+    private static final int BG_CARD        = 0xFF1F2026;  // Card background (lighter than panel)
+    private static final int ACCENT_RED     = 0xFFEB4040;  // Salmon red accent
     private static final int ENABLED_GREEN  = 0xFF226422;  // Enabled toggle
+    private static final int ENABLED_GREEN_H= 0xFF2E8E2E;  // Enabled hover
     private static final int DISABLED_GRAY  = 0xFF2A2B36;  // Disabled toggle
-    private static final int TEXT_PRIMARY   = 0xFFFFFFFF;  // White text
-    private static final int TEXT_SECONDARY = 0xFF8A8C96;  // Slate gray text
+    private static final int DISABLED_GRAY_H= 0xFF3A3B46;  // Disabled hover
+    private static final int TEXT_WHITE     = 0xFFFFFFFF;  // Primary text
+    private static final int TEXT_GRAY      = 0xFF8A8C96;  // Secondary text
     private static final int CLOSE_RED      = 0xFFBA2D2D;  // Close button
-    private static final int HEADER_BG      = 0xFF121214;  // Header bg
-    private static final int CARD_HOVER     = 0xFF282830;  // Card hover
+    private static final int HEADER_BG      = 0xFF121214;  // Header/nav background
+    private static final int ICON_BTN_BG    = 0xFF1A1A1E;  // Icon button background
+    private static final int ICON_BTN_HOVER = 0xFF2A2B36;  // Icon button hover
+    private static final int CARD_HOVER     = 0xFF262830;  // Card hover
+    private static final int SEPARATOR      = 0xFF222226;  // Lines/separators
+    private static final int CORNER_CLIP    = 0xFF141416;  // Corner clip color (matches panel)
 
-    // Layout geometry (calculated in init)
+    // Layout geometry
     private int panelX, panelY, panelW, panelH;
-    private int navBarH;  // External top navigation dock height
-    private int filterBarH; // Internal sub-header filter bar
+    private int navBarH;
+    private int filterBarH;
     private double scrollY = 0;
 
     public FeatherSettingsScreen(Screen parent) {
@@ -46,11 +52,7 @@ public class FeatherSettingsScreen extends Screen {
     }
 
     enum Category {
-        ALL("All"),
-        NEW("New"),
-        HUD("HUD"),
-        PVP("PvP");
-
+        ALL("All"), NEW("New"), HUD("HUD"), PVP("PvP");
         final String name;
         Category(String name) { this.name = name; }
     }
@@ -77,29 +79,56 @@ public class FeatherSettingsScreen extends Screen {
         }
     }
 
+    // ===== Rounded rectangle helpers =====
+    // Simulates rounded corners by clipping 2px corners with background color
+    private void fillRounded(DrawContext ctx, int x, int y, int w, int h, int color, int cornerColor, int r) {
+        ctx.fill(x, y, x + w, y + h, color);
+        if (r >= 2) {
+            // Top-left corner
+            ctx.fill(x, y, x + r, y + 1, cornerColor);
+            ctx.fill(x, y + 1, x + 1, y + r, cornerColor);
+            // Top-right corner
+            ctx.fill(x + w - r, y, x + w, y + 1, cornerColor);
+            ctx.fill(x + w - 1, y + 1, x + w, y + r, cornerColor);
+            // Bottom-left corner
+            ctx.fill(x, y + h - 1, x + r, y + h, cornerColor);
+            ctx.fill(x, y + h - r, x + 1, y + h - 1, cornerColor);
+            // Bottom-right corner
+            ctx.fill(x + w - r, y + h - 1, x + w, y + h, cornerColor);
+            ctx.fill(x + w - 1, y + h - r, x + w, y + h - 1, cornerColor);
+        }
+    }
+
     @Override
     protected void init() {
-        // === Blueprint: 68% screen width, 65% screen height, centered ===
-        panelW = (int)(this.width * 0.68);
-        panelH = (int)(this.height * 0.65);
+        // === 4:3 aspect ratio panel, centered on screen ===
+        // Target: panel that fits comfortably with a 4:3-ish ratio
+        int maxW = (int)(this.width * 0.72);
+        int maxH = (int)(this.height * 0.75);
+        // Enforce roughly 4:3
+        if (maxW > maxH * 4 / 3) {
+            panelW = maxH * 4 / 3;
+            panelH = maxH;
+        } else {
+            panelW = maxW;
+            panelH = maxW * 3 / 4;
+        }
         panelX = (this.width - panelW) / 2;
         panelY = (this.height - panelH) / 2;
 
-        // Nav bar is ~6% of panel height, sits ABOVE the main panel
-        navBarH = Math.max(20, (int)(panelH * 0.06));
-        // Filter bar inside main panel top
-        filterBarH = Math.max(18, (int)(panelH * 0.06));
+        navBarH = Math.max(22, (int)(panelH * 0.08));
+        filterBarH = Math.max(20, (int)(panelH * 0.07));
 
-        // Search field inside the filter bar, right side
+        // Search field inside filter bar
         int searchW = Math.min(100, panelW / 4);
-        int searchX = panelX + panelW - searchW - 40;
+        int searchX = panelX + panelW - searchW - 50;
         int searchY = panelY + navBarH + (filterBarH - 10) / 2;
         this.searchField = new TextFieldWidget(this.textRenderer, searchX, searchY, searchW, 10, Text.of("Search"));
         this.searchField.setMaxLength(30);
         this.searchField.setDrawsBackground(false);
         this.searchField.setPlaceholder(Text.of("Search..."));
-        this.searchField.setEditableColor(TEXT_PRIMARY);
-        this.searchField.setUneditableColor(TEXT_SECONDARY);
+        this.searchField.setEditableColor(TEXT_WHITE);
+        this.searchField.setUneditableColor(TEXT_GRAY);
         this.addSelectableChild(this.searchField);
 
         cards.clear();
@@ -176,24 +205,22 @@ public class FeatherSettingsScreen extends Screen {
         String query = this.searchField != null ? this.searchField.getText().toLowerCase().trim() : "";
         List<ModCard> list = new ArrayList<>();
         for (ModCard c : cards) {
-            boolean matchesCategory = (currentCategory == Category.ALL || c.category == currentCategory);
-            boolean matchesSearch = query.isEmpty() || c.name.toLowerCase().contains(query);
-            if (matchesCategory && matchesSearch) {
-                list.add(c);
-            }
+            boolean matchCat = (currentCategory == Category.ALL || c.category == currentCategory);
+            boolean matchSearch = query.isEmpty() || c.name.toLowerCase().contains(query);
+            if (matchCat && matchSearch) list.add(c);
         }
         list.sort(java.util.Comparator.comparing(c -> c.name));
         return list;
     }
 
     private int getCols() {
-        if (panelW >= 400) return 4;
-        if (panelW >= 280) return 3;
+        if (panelW >= 360) return 4;
+        if (panelW >= 260) return 3;
         return 2;
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double hAmt, double vAmt) {
         int gridTop = panelY + navBarH + filterBarH;
         int gridBot = panelY + panelH;
         if (mouseX >= panelX && mouseX <= panelX + panelW && mouseY >= gridTop && mouseY <= gridBot) {
@@ -205,19 +232,18 @@ public class FeatherSettingsScreen extends Screen {
             int totalH = rows * (cardH + pad) + pad;
             int gridH = gridBot - gridTop;
             double maxScroll = Math.max(0, totalH - gridH);
-            scrollY -= verticalAmount * 22;
+            scrollY -= vAmt * 22;
             if (scrollY < 0) scrollY = 0;
             if (scrollY > maxScroll) scrollY = maxScroll;
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return super.mouseScrolled(mouseX, mouseY, hAmt, vAmt);
     }
 
     private int getCardH() {
-        // Card height: roughly 3 rows fill ~82% of the panel grid area
         int gridH = panelH - navBarH - filterBarH;
-        int h = (gridH - 8 * 4) / 3;  // 3 visible rows, 4 gaps of 8px
-        return Math.max(50, Math.min(h, 90));
+        int h = (gridH - 8 * 4) / 3;
+        return Math.max(55, Math.min(h, 85));
     }
 
     // ============================================================
@@ -225,136 +251,126 @@ public class FeatherSettingsScreen extends Screen {
     // ============================================================
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Darken game background
-        context.fill(0, 0, this.width, this.height, 0x88000000);
+        // === FULLY OPAQUE dark background over game ===
+        context.fill(0, 0, this.width, this.height, 0xFF0A0A0C);
 
         int cols = getCols();
-        int pad = 8;  // Uniform 8px gap from blueprint
+        int pad = 8;
         int cardH = getCardH();
         int cardW = (panelW - pad * (cols + 1)) / cols;
 
-        // ===============================================
-        // A. TOP NAVIGATION DOCK (External Header)
-        // ===============================================
+        // ====================================================
+        // A. TOP NAVIGATION DOCK (above main panel body)
+        // ====================================================
         int navY = panelY;
-        int navBottom = navY + navBarH;
+        int navBot = navY + navBarH;
 
-        // Nav bar background
-        context.fill(panelX, navY, panelX + panelW, navBottom, HEADER_BG);
+        // Nav bar background (solid opaque)
+        context.fill(panelX, navY, panelX + panelW, navBot, HEADER_BG);
 
-        // Feather icon (left side)
+        // Feather icon (left)
         Identifier iconId = Identifier.of("featherpojav", "icon.png");
-        int iconSize = navBarH - 4;
-        context.drawTexture(iconId, panelX + 4, navY + 2, 0.0f, 0.0f, iconSize, iconSize, 500, 500);
+        int icoS = navBarH - 6;
+        context.drawTexture(iconId, panelX + 5, navY + 3, 0.0f, 0.0f, icoS, icoS, 500, 500);
 
-        // Red "MOD MENU" tab (left side, next to icon)
-        int mmTabX = panelX + iconSize + 8;
-        int mmTabW = 62;
-        int mmTabH = navBarH - 4;
-        int mmTabY = navY + 2;
-        context.fill(mmTabX, mmTabY, mmTabX + mmTabW, mmTabY + mmTabH, ACCENT_RED);
-        context.drawText(this.textRenderer, "🪶 MOD MENU", mmTabX + 4, mmTabY + (mmTabH - 8) / 2, TEXT_PRIMARY, false);
+        // Red "MOD MENU" pill tab (rounded, left of icons)
+        int mmX = panelX + icoS + 10;
+        int mmW = 66;
+        int mmH = navBarH - 6;
+        int mmY = navY + 3;
+        fillRounded(context, mmX, mmY, mmW, mmH, ACCENT_RED, HEADER_BG, 2);
+        context.drawText(this.textRenderer, "🪶 MOD MENU", mmX + 4, mmY + (mmH - 8) / 2, TEXT_WHITE, false);
 
-        // Small dark icon-only square buttons (section icons) after MOD MENU tab
-        int secIconX = mmTabX + mmTabW + 6;
-        String[] sectionIcons = {"⚙", "👕", "📺", "🎮", "👥"};
-        for (String si : sectionIcons) {
-            int btnSize = navBarH - 6;
-            boolean siHover = mouseX >= secIconX && mouseX <= secIconX + btnSize && mouseY >= navY + 3 && mouseY <= navY + 3 + btnSize;
-            context.fill(secIconX, navY + 3, secIconX + btnSize, navY + 3 + btnSize, siHover ? 0xFF2A2B36 : 0xFF1A1A1E);
-            context.drawCenteredTextWithShadow(this.textRenderer, si, secIconX + btnSize / 2, navY + 3 + (btnSize - 8) / 2, TEXT_SECONDARY);
-            secIconX += btnSize + 3;
+        // Section icon buttons with dark square bounding boxes
+        int secX = mmX + mmW + 8;
+        String[] secIcons = {"⚙", "👕", "📺", "🎮", "👥"};
+        int btnS = navBarH - 8;
+        for (String si : secIcons) {
+            boolean siH = mouseX >= secX && mouseX <= secX + btnS + 4 && mouseY >= navY + 3 && mouseY <= navY + 3 + btnS + 2;
+            fillRounded(context, secX, navY + 4, btnS + 4, btnS + 2, siH ? ICON_BTN_HOVER : ICON_BTN_BG, HEADER_BG, 2);
+            context.drawCenteredTextWithShadow(this.textRenderer, si, secX + (btnS + 4) / 2, navY + 4 + (btnS - 6) / 2, siH ? TEXT_WHITE : TEXT_GRAY);
+            secX += btnS + 8;
         }
 
-        // "F E A T H E R C L I E N T" branding text centered in header
-        String brand = "F E A T H E R C L I E N T";
-        int brandW = this.textRenderer.getWidth(brand);
-        context.drawText(this.textRenderer, brand, panelX + panelW / 2 - brandW / 2, navY + (navBarH - 8) / 2, ACCENT_RED, true);
+        // "FeatherClient" branding - normal kerning, left-aligned after icons
+        context.drawText(this.textRenderer, "FeatherClient", secX + 6, navY + (navBarH - 8) / 2, ACCENT_RED, true);
 
-        // Profile username (right side)
+        // Username (right side)
         if (this.client != null && this.client.getSession() != null) {
             String uname = this.client.getSession().getUsername();
             if (uname.length() > 10) uname = uname.substring(0, 8) + "..";
-            int unameW = this.textRenderer.getWidth(uname);
-            context.drawText(this.textRenderer, uname, panelX + panelW - unameW - 24, navY + (navBarH - 8) / 2, TEXT_PRIMARY, true);
+            int unW = this.textRenderer.getWidth(uname);
+            context.drawText(this.textRenderer, uname, panelX + panelW - unW - 26, navY + (navBarH - 8) / 2, TEXT_WHITE, true);
         }
 
-        // Close X button (right edge, dark red)
-        int closeSize = navBarH - 6;
-        int closeX = panelX + panelW - closeSize - 3;
-        int closeY = navY + 3;
-        boolean closeHover = mouseX >= closeX && mouseX <= closeX + closeSize && mouseY >= closeY && mouseY <= closeY + closeSize;
-        context.fill(closeX, closeY, closeX + closeSize, closeY + closeSize, closeHover ? 0xFFE53935 : CLOSE_RED);
-        context.drawCenteredTextWithShadow(this.textRenderer, "✕", closeX + closeSize / 2, closeY + (closeSize - 8) / 2, TEXT_PRIMARY);
+        // Close X button (rounded dark red square)
+        int clS = navBarH - 8;
+        int clX = panelX + panelW - clS - 5;
+        int clY = navY + 4;
+        boolean clH = mouseX >= clX && mouseX <= clX + clS && mouseY >= clY && mouseY <= clY + clS;
+        fillRounded(context, clX, clY, clS, clS, clH ? 0xFFE53935 : CLOSE_RED, HEADER_BG, 2);
+        context.drawCenteredTextWithShadow(this.textRenderer, "✕", clX + clS / 2, clY + (clS - 8) / 2, TEXT_WHITE);
 
-        // ===============================================
-        // MAIN PANEL BODY (below nav bar)
-        // ===============================================
-        int bodyY = navBottom;
+        // ====================================================
+        // MAIN PANEL BODY (solid opaque, below nav bar)
+        // ====================================================
+        int bodyY = navBot;
         int bodyH = panelH - navBarH;
         context.fill(panelX, bodyY, panelX + panelW, bodyY + bodyH, BG_PANEL);
 
-        // ===============================================
-        // B. INTERNAL SUB-HEADER (Filter Bar)
-        // ===============================================
-        int filterY = bodyY + 2;
+        // ====================================================
+        // B. FILTER BAR (pill tabs + search)
+        // ====================================================
+        int filterY = bodyY + 3;
 
-        // Category pill tabs (left side)
+        // Category pill tabs (rounded)
         int catX = panelX + pad;
         for (Category cat : Category.values()) {
             boolean active = cat == currentCategory;
-            int tw = this.textRenderer.getWidth(cat.name) + 12;
-            int pillH = filterBarH - 6;
-            int pillY = filterY + 2;
-            boolean catHover = mouseX >= catX && mouseX <= catX + tw && mouseY >= pillY && mouseY <= pillY + pillH;
+            int tw = this.textRenderer.getWidth(cat.name) + 14;
+            int pH = filterBarH - 8;
+            int pY = filterY + 2;
+            boolean catH = mouseX >= catX && mouseX <= catX + tw && mouseY >= pY && mouseY <= pY + pH;
 
-            if (active) {
-                context.fill(catX, pillY, catX + tw, pillY + pillH, ACCENT_RED);
-            } else if (catHover) {
-                context.fill(catX, pillY, catX + tw, pillY + pillH, 0xFF2A2B36);
-            }
-            context.drawCenteredTextWithShadow(this.textRenderer, cat.name, catX + tw / 2, pillY + (pillH - 8) / 2, active ? TEXT_PRIMARY : TEXT_SECONDARY);
-            catX += tw + 4;
+            int pillColor;
+            if (active) pillColor = ACCENT_RED;
+            else if (catH) pillColor = ICON_BTN_HOVER;
+            else pillColor = ICON_BTN_BG;
+
+            fillRounded(context, catX, pY, tw, pH, pillColor, BG_PANEL, 2);
+            context.drawCenteredTextWithShadow(this.textRenderer, cat.name, catX + tw / 2, pY + (pH - 8) / 2, active ? TEXT_WHITE : TEXT_GRAY);
+            catX += tw + 5;
         }
 
-        // Search field (right side of filter bar)
+        // Search field
         if (this.searchField != null) {
             int sX = this.searchField.getX();
             int sY = this.searchField.getY();
             int sW = this.searchField.getWidth();
             int sH = this.searchField.getHeight();
-            context.fill(sX - 4, sY - 3, sX + sW + 4, sY + sH + 3, 0xFF1A1A1E);
+            fillRounded(context, sX - 4, sY - 3, sW + 8, sH + 6, ICON_BTN_BG, BG_PANEL, 2);
             this.searchField.render(context, mouseX, mouseY, delta);
         }
 
-        // Heart + Grid layout utility icons (far right of filter bar)
-        int utilX = panelX + panelW - 28;
-        int utilY = filterY + 3;
-        int utilS = filterBarH - 8;
-        context.fill(utilX, utilY, utilX + utilS, utilY + utilS, 0xFF1A1A1E);
-        context.drawCenteredTextWithShadow(this.textRenderer, "♥", utilX + utilS / 2, utilY + (utilS - 8) / 2, TEXT_SECONDARY);
-        utilX -= utilS + 3;
-        context.fill(utilX, utilY, utilX + utilS, utilY + utilS, 0xFF1A1A1E);
-        context.drawCenteredTextWithShadow(this.textRenderer, "▦", utilX + utilS / 2, utilY + (utilS - 8) / 2, TEXT_SECONDARY);
+        // Utility icons (heart + grid) right side
+        int uS = filterBarH - 10;
+        int uX = panelX + panelW - uS - pad;
+        int uY = filterY + 4;
+        fillRounded(context, uX, uY, uS, uS, ICON_BTN_BG, BG_PANEL, 2);
+        context.drawCenteredTextWithShadow(this.textRenderer, "♥", uX + uS / 2, uY + (uS - 8) / 2, TEXT_GRAY);
+        uX -= uS + 4;
+        fillRounded(context, uX, uY, uS, uS, ICON_BTN_BG, BG_PANEL, 2);
+        context.drawCenteredTextWithShadow(this.textRenderer, "▦", uX + uS / 2, uY + (uS - 8) / 2, TEXT_GRAY);
 
-        // HUD Layout button (positioned left of utility icons)
-        int hudBtnW = 60;
-        int hudBtnH = filterBarH - 6;
-        int hudBtnX = utilX - hudBtnW - 6;
-        int hudBtnY = filterY + 2;
-        boolean hudHover = mouseX >= hudBtnX && mouseX <= hudBtnX + hudBtnW && mouseY >= hudBtnY && mouseY <= hudBtnY + hudBtnH;
-        context.fill(hudBtnX, hudBtnY, hudBtnX + hudBtnW, hudBtnY + hudBtnH, hudHover ? 0xFF2A2B36 : 0xFF1A1A1E);
-        context.drawCenteredTextWithShadow(this.textRenderer, "📐 Layout", hudBtnX + hudBtnW / 2, hudBtnY + (hudBtnH - 8) / 2, hudHover ? TEXT_PRIMARY : TEXT_SECONDARY);
+        // Separator
+        int sepY = filterY + filterBarH - 2;
+        context.fill(panelX + pad, sepY, panelX + panelW - pad, sepY + 1, SEPARATOR);
 
-        // Separator line below filter bar
-        int sepY = filterY + filterBarH - 1;
-        context.fill(panelX + pad, sepY, panelX + panelW - pad, sepY + 1, 0xFF222226);
-
-        // ===============================================
-        // C. MOD GRID (4-column, ~3 visible rows)
-        // ===============================================
+        // ====================================================
+        // C. MOD CARD GRID (4 columns, uniform 8px gaps)
+        // ====================================================
         int gridTop = bodyY + filterBarH + 2;
-        int gridH = bodyY + bodyH - gridTop;
+        int gridH = bodyY + bodyH - gridTop - pad; // Bottom padding
 
         context.enableScissor(panelX, gridTop, panelX + panelW, gridTop + gridH);
 
@@ -371,67 +387,59 @@ public class FeatherSettingsScreen extends Screen {
                 boolean enabled = card.getter.getAsBoolean();
                 boolean hover = mouseX >= cX && mouseX <= cX + cardW && mouseY >= cY && mouseY <= cY + cardH;
 
-                // === Card Background ===
-                context.fill(cX, cY, cX + cardW, cY + cardH, hover ? CARD_HOVER : BG_CARD);
+                // === Card background (rounded, lighter than panel) ===
+                fillRounded(context, cX, cY, cardW, cardH, hover ? CARD_HOVER : BG_CARD, BG_PANEL, 2);
 
-                // === "NEW" green badge (top-left, above name) ===
-                int textStartY = cY + 4;
+                // === "NEW" badge (green, top-left, above name) ===
+                int nameY = cY + 5;
                 if (card.category == Category.NEW) {
-                    context.fill(cX + 4, textStartY, cX + 26, textStartY + 9, 0xFF2E7D32);
-                    // Scale down the NEW text
-                    context.drawText(this.textRenderer, "NEW", cX + 5, textStartY + 1, TEXT_PRIMARY, false);
-                    textStartY += 10;
+                    fillRounded(context, cX + 4, nameY - 1, 24, 10, 0xFF2E7D32, hover ? CARD_HOVER : BG_CARD, 1);
+                    context.drawText(this.textRenderer, "NEW", cX + 6, nameY, TEXT_WHITE, false);
+                    nameY += 11;
                 }
 
-                // === Mod name (top-left, left-aligned) ===
-                String displayName = card.name;
-                int maxNameW = cardW - 20;
-                if (this.textRenderer.getWidth(displayName) > maxNameW) {
-                    while (this.textRenderer.getWidth(displayName + "..") > maxNameW && displayName.length() > 2) {
-                        displayName = displayName.substring(0, displayName.length() - 1);
-                    }
-                    displayName += "..";
+                // === Mod name (top-left, LEFT-ALIGNED) ===
+                String dName = card.name;
+                int maxNW = cardW - 22;
+                while (this.textRenderer.getWidth(dName) > maxNW && dName.length() > 3) {
+                    dName = dName.substring(0, dName.length() - 1);
                 }
-                context.drawText(this.textRenderer, displayName, cX + 5, textStartY, TEXT_PRIMARY, false);
+                if (dName.length() < card.name.length()) dName += "..";
+                context.drawText(this.textRenderer, dName, cX + 5, nameY, TEXT_WHITE, false);
 
-                // === Heart icon (top-right, for favoriting) ===
-                boolean heartHover = mouseX >= cX + cardW - 14 && mouseX <= cX + cardW - 2 && mouseY >= cY + 3 && mouseY <= cY + 15;
-                context.drawText(this.textRenderer, "♥", cX + cardW - 12, cY + 4, heartHover ? ACCENT_RED : 0xFF444450, false);
+                // === Heart icon (top-right) ===
+                context.drawText(this.textRenderer, "♥", cX + cardW - 12, cY + 5, 0xFF444450, false);
 
-                // === Center icon (vertically & horizontally centered in asset area) ===
-                int iconAreaTop = textStartY + 12;
-                int iconAreaBot = cY + cardH - 20;
-                int iconCenterY = (iconAreaTop + iconAreaBot) / 2 - 4;
-                context.drawCenteredTextWithShadow(this.textRenderer, card.icon, cX + cardW / 2, iconCenterY, 0xFFCCCCCC);
+                // === Center icon (vertically+horizontally centered in asset area) ===
+                int iconTop = nameY + 12;
+                int iconBot = cY + cardH - 20;
+                int iconMid = (iconTop + iconBot) / 2 - 3;
+                context.drawCenteredTextWithShadow(this.textRenderer, card.icon, cX + cardW / 2, iconMid, 0xFFDDDDDD);
 
                 // === Bottom Control Row ===
-                int botRowY = cY + cardH - 16;
+                int botY = cY + cardH - 17;
 
-                // Gear icon button (bottom-left, small square)
-                if (card.onConfigure != null) {
-                    int gearS = 12;
-                    int gearX = cX + 4;
-                    int gearY = botRowY + 1;
-                    boolean gearHover = mouseX >= gearX && mouseX <= gearX + gearS && mouseY >= gearY && mouseY <= gearY + gearS;
-                    context.fill(gearX, gearY, gearX + gearS, gearY + gearS, gearHover ? 0xFF3A3A44 : 0xFF222228);
-                    context.drawCenteredTextWithShadow(this.textRenderer, "⚙", gearX + gearS / 2, gearY + 2, gearHover ? TEXT_PRIMARY : TEXT_SECONDARY);
-                }
+                // Gear icon (EVERY card gets one, rounded square)
+                int gS = 13;
+                int gX = cX + 4;
+                int gY = botY + 1;
+                boolean gH = mouseX >= gX && mouseX <= gX + gS && mouseY >= gY && mouseY <= gY + gS;
+                fillRounded(context, gX, gY, gS, gS, gH ? 0xFF3A3A44 : 0xFF222228, hover ? CARD_HOVER : BG_CARD, 1);
+                context.drawCenteredTextWithShadow(this.textRenderer, "⚙", gX + gS / 2, gY + 3, gH ? TEXT_WHITE : TEXT_GRAY);
 
-                // Toggle pill button (spans rest of bottom, right side)
-                int toggleX = card.onConfigure != null ? cX + 20 : cX + 4;
-                int toggleW = cX + cardW - 4 - toggleX;
-                int toggleH = 13;
-                int toggleY = botRowY + 1;
-                boolean toggleHover = mouseX >= toggleX && mouseX <= toggleX + toggleW && mouseY >= toggleY && mouseY <= toggleY + toggleH;
+                // Toggle pill button (rounded, spans rest of bottom)
+                int tX = cX + 20;
+                int tW = cardW - 24;
+                int tH = 13;
+                int tY = botY + 1;
+                boolean tHov = mouseX >= tX && mouseX <= tX + tW && mouseY >= tY && mouseY <= tY + tH;
 
                 if (enabled) {
-                    int bg = toggleHover ? 0xFF2E8E2E : ENABLED_GREEN;
-                    context.fill(toggleX, toggleY, toggleX + toggleW, toggleY + toggleH, bg);
-                    context.drawCenteredTextWithShadow(this.textRenderer, "Enabled", toggleX + toggleW / 2, toggleY + 3, TEXT_PRIMARY);
+                    fillRounded(context, tX, tY, tW, tH, tHov ? ENABLED_GREEN_H : ENABLED_GREEN, hover ? CARD_HOVER : BG_CARD, 2);
+                    context.drawCenteredTextWithShadow(this.textRenderer, "Enabled", tX + tW / 2, tY + 3, TEXT_WHITE);
                 } else {
-                    int bg = toggleHover ? 0xFF3A3B46 : DISABLED_GRAY;
-                    context.fill(toggleX, toggleY, toggleX + toggleW, toggleY + toggleH, bg);
-                    context.drawCenteredTextWithShadow(this.textRenderer, "Disabled", toggleX + toggleW / 2, toggleY + 3, TEXT_SECONDARY);
+                    fillRounded(context, tX, tY, tW, tH, tHov ? DISABLED_GRAY_H : DISABLED_GRAY, hover ? CARD_HOVER : BG_CARD, 2);
+                    context.drawCenteredTextWithShadow(this.textRenderer, "Disabled", tX + tW / 2, tY + 3, TEXT_GRAY);
                 }
             }
             idx++;
@@ -443,9 +451,9 @@ public class FeatherSettingsScreen extends Screen {
         int rows = (filtered.size() + cols - 1) / cols;
         int totalH = rows * (cardH + pad) + pad;
         if (totalH > gridH) {
-            int barH = Math.max(12, (int)((double) gridH / totalH * gridH));
+            int barH = Math.max(14, (int)((double) gridH / totalH * gridH));
             int barY = gridTop + (int)((scrollY / (totalH - gridH)) * (gridH - barH));
-            context.fill(panelX + panelW - 4, barY, panelX + panelW - 1, barY + barH, 0xFF444450);
+            fillRounded(context, panelX + panelW - 5, barY, 3, barH, 0xFF444450, BG_PANEL, 1);
         }
 
         super.render(context, mouseX, mouseY, delta);
@@ -458,62 +466,46 @@ public class FeatherSettingsScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int navY = panelY;
 
-        // === Close X button ===
-        int closeSize = navBarH - 6;
-        int closeX = panelX + panelW - closeSize - 3;
-        int closeY2 = navY + 3;
-        if (mouseX >= closeX && mouseX <= closeX + closeSize && mouseY >= closeY2 && mouseY <= closeY2 + closeSize) {
+        // Close X
+        int clS = navBarH - 8;
+        int clX = panelX + panelW - clS - 5;
+        int clY = navY + 4;
+        if (mouseX >= clX && mouseX <= clX + clS && mouseY >= clY && mouseY <= clY + clS) {
             this.close();
             return true;
         }
 
-        // === Search field focus ===
+        // Search field
         if (this.searchField != null) {
             boolean clicked = mouseX >= this.searchField.getX() - 4 && mouseX <= this.searchField.getX() + this.searchField.getWidth() + 4
                            && mouseY >= this.searchField.getY() - 3 && mouseY <= this.searchField.getY() + this.searchField.getHeight() + 3;
             this.searchField.setFocused(clicked);
-            if (clicked && button == 1) {
-                this.searchField.setText("");
-            }
+            if (clicked && button == 1) this.searchField.setText("");
         }
 
-        // === Category tabs ===
+        // Category tabs
         int bodyY = navY + navBarH;
-        int filterY = bodyY + 2;
+        int filterY = bodyY + 3;
         int catX = panelX + 8;
         for (Category cat : Category.values()) {
-            int tw = this.textRenderer.getWidth(cat.name) + 12;
-            int pillH = filterBarH - 6;
-            int pillY = filterY + 2;
-            if (mouseX >= catX && mouseX <= catX + tw && mouseY >= pillY && mouseY <= pillY + pillH) {
+            int tw = this.textRenderer.getWidth(cat.name) + 14;
+            int pH = filterBarH - 8;
+            int pY = filterY + 2;
+            if (mouseX >= catX && mouseX <= catX + tw && mouseY >= pY && mouseY <= pY + pH) {
                 currentCategory = cat;
                 scrollY = 0;
                 return true;
             }
-            catX += tw + 4;
+            catX += tw + 5;
         }
 
-        // === HUD Layout button ===
-        int utilX = panelX + panelW - 28;
-        int utilS = filterBarH - 8;
-        int hudBtnW = 60;
-        int hudBtnH = filterBarH - 6;
-        int hudBtnX = utilX - utilS - 3 - hudBtnW - 6;
-        int hudBtnY = filterY + 2;
-        if (mouseX >= hudBtnX && mouseX <= hudBtnX + hudBtnW && mouseY >= hudBtnY && mouseY <= hudBtnY + hudBtnH) {
-            if (this.client != null) {
-                this.client.setScreen(new net.featherpojav.client.gui.FeatherHudEditorScreen(this));
-            }
-            return true;
-        }
-
-        // === Card interactions ===
+        // Card interactions
         int cols = getCols();
         int pad = 8;
         int cardH = getCardH();
         int cardW = (panelW - pad * (cols + 1)) / cols;
         int gridTop = bodyY + filterBarH + 2;
-        int gridH = bodyY + (panelH - navBarH) - gridTop;
+        int gridH = bodyY + (panelH - navBarH) - gridTop - pad;
 
         List<ModCard> filtered = getFilteredCards();
         int idx = 0;
@@ -533,29 +525,29 @@ public class FeatherSettingsScreen extends Screen {
                     return true;
                 }
 
-                // Gear icon click
-                if (card.onConfigure != null) {
-                    int gearS = 12;
-                    int gearX = cX + 4;
-                    int gearY = cY + cardH - 16 + 1;
-                    if (mouseX >= gearX && mouseX <= gearX + gearS && mouseY >= gearY && mouseY <= gearY + gearS) {
+                // Gear icon click (every card has one, but only configurable ones open settings)
+                int gS = 13;
+                int gX = cX + 4;
+                int gY = cY + cardH - 17 + 1;
+                if (mouseX >= gX && mouseX <= gX + gS && mouseY >= gY && mouseY <= gY + gS) {
+                    if (card.onConfigure != null) {
                         card.onConfigure.run();
-                        return true;
                     }
+                    return true;
                 }
 
-                // Toggle button click
-                int toggleX = card.onConfigure != null ? cX + 20 : cX + 4;
-                int toggleW = cX + cardW - 4 - toggleX;
-                int toggleH = 13;
-                int toggleY = cY + cardH - 16 + 1;
-                if (mouseX >= toggleX && mouseX <= toggleX + toggleW && mouseY >= toggleY && mouseY <= toggleY + toggleH) {
+                // Toggle pill click
+                int tX = cX + 20;
+                int tW = cardW - 24;
+                int tH = 13;
+                int tY = cY + cardH - 17 + 1;
+                if (mouseX >= tX && mouseX <= tX + tW && mouseY >= tY && mouseY <= tY + tH) {
                     card.setter.accept(!card.getter.getAsBoolean());
                     FeatherConfig.save();
                     return true;
                 }
 
-                // Clicking card body also toggles
+                // Click card body toggles
                 if (cardClicked && button == 0) {
                     card.setter.accept(!card.getter.getAsBoolean());
                     FeatherConfig.save();
@@ -569,15 +561,11 @@ public class FeatherSettingsScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Do nothing - render game behind
-    }
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {}
 
     @Override
     public void close() {
-        if (this.client != null) {
-            this.client.setScreen(parent);
-        }
+        if (this.client != null) this.client.setScreen(parent);
     }
 
     @Override
@@ -600,7 +588,7 @@ public class FeatherSettingsScreen extends Screen {
 }
 
 // ==========================================
-// Sub-Settings Configuration Screen: Auto Text
+// Sub-Settings: Auto Text
 // ==========================================
 class FeatherAutoTextScreen extends Screen {
     private final Screen parent;
@@ -615,237 +603,125 @@ class FeatherAutoTextScreen extends Screen {
 
     @Override
     protected void init() {
-        int cx = this.width / 2;
-        int cy = this.height / 2;
-
-        inputField = new TextFieldWidget(this.textRenderer, cx - 100, cy - 35, 200, 20, Text.of("Edit Macro Command"));
+        int cx = this.width / 2, cy = this.height / 2;
+        inputField = new TextFieldWidget(this.textRenderer, cx - 100, cy - 35, 200, 20, Text.of("Edit Macro"));
         inputField.setMaxLength(128);
         inputField.setText(FeatherConfig.INSTANCE.autoTextCommand);
         this.addSelectableChild(inputField);
-
-        bindButton = ButtonWidget.builder(Text.of(getKeyNameText()), button -> {
-            listening = true;
-            button.setMessage(Text.of("Press any key..."));
-        }).dimensions(cx - 100, cy - 5, 200, 20).build();
+        bindButton = ButtonWidget.builder(Text.of(getKeyNameText()), b -> { listening = true; b.setMessage(Text.of("Press any key...")); }).dimensions(cx - 100, cy - 5, 200, 20).build();
         this.addDrawableChild(bindButton);
-
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Save & Back"), button -> {
-            FeatherConfig.INSTANCE.autoTextCommand = inputField.getText();
-            FeatherConfig.save();
-            if (this.client != null) this.client.setScreen(parent);
-        }).dimensions(cx - 50, cy + 25, 100, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Save & Back"), b -> { FeatherConfig.INSTANCE.autoTextCommand = inputField.getText(); FeatherConfig.save(); if (this.client != null) this.client.setScreen(parent); }).dimensions(cx - 50, cy + 25, 100, 20).build());
     }
 
-    private String getKeyNameText() {
-        return "Keybind: " + FeatherPojavModClient.autoTextKey.getBoundKeyTranslationKey().replace("key.keyboard.", "").toUpperCase();
-    }
+    private String getKeyNameText() { return "Keybind: " + FeatherPojavModClient.autoTextKey.getBoundKeyTranslationKey().replace("key.keyboard.", "").toUpperCase(); }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (listening) {
-            listening = false;
-            if (keyCode != GLFW.GLFW_KEY_ESCAPE) {
-                FeatherPojavModClient.autoTextKey.setBoundKey(InputUtil.fromKeyCode(keyCode, scanCode));
-                if (this.client != null && this.client.options != null) {
-                    this.client.options.write();
-                }
-            }
-            bindButton.setMessage(Text.of(getKeyNameText()));
-            return true;
-        }
-        if (inputField.keyPressed(keyCode, scanCode, modifiers)) {
-            return true;
-        }
+        if (listening) { listening = false; if (keyCode != GLFW.GLFW_KEY_ESCAPE) { FeatherPojavModClient.autoTextKey.setBoundKey(InputUtil.fromKeyCode(keyCode, scanCode)); if (this.client != null && this.client.options != null) this.client.options.write(); } bindButton.setMessage(Text.of(getKeyNameText())); return true; }
+        if (inputField.keyPressed(keyCode, scanCode, modifiers)) return true;
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    @Override
-    public boolean charTyped(char chr, int modifiers) {
-        if (inputField.charTyped(chr, modifiers)) {
-            return true;
-        }
-        return super.charTyped(chr, modifiers);
-    }
+    @Override public boolean charTyped(char chr, int mod) { if (inputField.charTyped(chr, mod)) return true; return super.charTyped(chr, mod); }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fill(0, 0, this.width, this.height, 0xD016161A);
+        context.fill(0, 0, this.width, this.height, 0xFF141416);
         context.drawCenteredTextWithShadow(this.textRenderer, "AUTO TEXT MACRO CONFIG", this.width / 2, this.height / 2 - 65, 0xFFFFFFFF);
-        context.drawCenteredTextWithShadow(this.textRenderer, "Edit the command macro and click the keybind button to customize.", this.width / 2, this.height / 2 - 50, 0xFFEB4040);
+        context.drawCenteredTextWithShadow(this.textRenderer, "Edit the command macro and click the keybind button.", this.width / 2, this.height / 2 - 50, 0xFFEB4040);
         inputField.render(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
     }
 
-    @Override
-    public void close() {
-        if (this.client != null) this.client.setScreen(parent);
-    }
+    @Override public void close() { if (this.client != null) this.client.setScreen(parent); }
 }
 
 // ==========================================
-// Sub-Settings Configuration Screen: TimeChanger
+// Sub-Settings: TimeChanger
 // ==========================================
 class FeatherTimeChangerScreen extends Screen {
     private final Screen parent;
-
-    protected FeatherTimeChangerScreen(Screen parent) {
-        super(Text.of("TimeChanger Settings"));
-        this.parent = parent;
-    }
+    protected FeatherTimeChangerScreen(Screen parent) { super(Text.of("TimeChanger")); this.parent = parent; }
 
     @Override
     protected void init() {
-        int leftX = this.width / 2 - 95;
-        int startY = this.height / 2 - 35;
-
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Morning"), button -> setTime(0, 0)).dimensions(leftX, startY, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Day"), button -> setTime(6000, 1)).dimensions(leftX + 100, startY, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Sunset"), button -> setTime(12000, 2)).dimensions(leftX, startY + 25, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Night"), button -> setTime(18000, 3)).dimensions(leftX + 100, startY + 25, 90, 20).build());
-
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Back"), button -> {
-            if (this.client != null) this.client.setScreen(parent);
-        }).dimensions(this.width / 2 - 45, startY + 60, 90, 20).build());
+        int lx = this.width / 2 - 95, sy = this.height / 2 - 35;
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Morning"), b -> setTime(0, 0)).dimensions(lx, sy, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Day"), b -> setTime(6000, 1)).dimensions(lx + 100, sy, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Sunset"), b -> setTime(12000, 2)).dimensions(lx, sy + 25, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Night"), b -> setTime(18000, 3)).dimensions(lx + 100, sy + 25, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Back"), b -> { if (this.client != null) this.client.setScreen(parent); }).dimensions(this.width / 2 - 45, sy + 60, 90, 20).build());
     }
 
-    private void setTime(long ticks, int mode) {
-        FeatherConfig.INSTANCE.timeChangerTicks = ticks;
-        FeatherConfig.INSTANCE.timeChangerMode = mode;
-        FeatherConfig.save();
-    }
+    private void setTime(long t, int m) { FeatherConfig.INSTANCE.timeChangerTicks = t; FeatherConfig.INSTANCE.timeChangerMode = m; FeatherConfig.save(); }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fill(0, 0, this.width, this.height, 0xD016161A);
+        context.fill(0, 0, this.width, this.height, 0xFF141416);
         context.drawCenteredTextWithShadow(this.textRenderer, "TIMECHANGER PRESETS", this.width / 2, this.height / 2 - 60, 0xFFFFFFFF);
-
-        String modeName = "Day";
-        if (FeatherConfig.INSTANCE.timeChangerMode == 0) modeName = "Morning";
-        else if (FeatherConfig.INSTANCE.timeChangerMode == 2) modeName = "Sunset";
-        else if (FeatherConfig.INSTANCE.timeChangerMode == 3) modeName = "Night";
-        context.drawCenteredTextWithShadow(this.textRenderer, "Active: " + modeName + " (" + FeatherConfig.INSTANCE.timeChangerTicks + " ticks)", this.width / 2, this.height / 2 - 48, 0xFFEB4040);
-
+        String n = "Day"; if (FeatherConfig.INSTANCE.timeChangerMode == 0) n = "Morning"; else if (FeatherConfig.INSTANCE.timeChangerMode == 2) n = "Sunset"; else if (FeatherConfig.INSTANCE.timeChangerMode == 3) n = "Night";
+        context.drawCenteredTextWithShadow(this.textRenderer, "Active: " + n + " (" + FeatherConfig.INSTANCE.timeChangerTicks + " ticks)", this.width / 2, this.height / 2 - 48, 0xFFEB4040);
         super.render(context, mouseX, mouseY, delta);
     }
 
-    @Override
-    public void close() {
-        if (this.client != null) this.client.setScreen(parent);
-    }
+    @Override public void close() { if (this.client != null) this.client.setScreen(parent); }
 }
 
 // ==========================================
-// Sub-Settings Configuration Screen: Crosshair
+// Sub-Settings: Crosshair
 // ==========================================
 class FeatherCrosshairScreen extends Screen {
     private final Screen parent;
-
-    protected FeatherCrosshairScreen(Screen parent) {
-        super(Text.of("Crosshair Settings"));
-        this.parent = parent;
-    }
+    protected FeatherCrosshairScreen(Screen parent) { super(Text.of("Crosshair")); this.parent = parent; }
 
     private static final int[] COLORS = {0xFF00FF00, 0xFFFF0000, 0xFF00BFFF, 0xFFFFFF00, 0xFF00FFFF, 0xFFFF00FF, 0xFFFFFFFF, 0xFFFF8C00, 0xFFFF69B4};
     private static final String[] COLOR_NAMES = {"Green", "Red", "Blue", "Yellow", "Cyan", "Magenta", "White", "Orange", "Pink"};
 
-    private String getPresetButtonText() {
-        String[] presets = {"Cross", "Dot", "Circle", "Circle/Dot", "T-Shape", "X-Shape", "Square", "Chevron", "Tri-Bar", "Box/Dot"};
-        int p = FeatherConfig.INSTANCE.crosshairPreset;
-        if (p < 0 || p >= presets.length) p = 0;
-        return "Style: " + presets[p];
-    }
-
-    private void cyclePreset(ButtonWidget button) {
-        FeatherConfig.INSTANCE.crosshairPreset = (FeatherConfig.INSTANCE.crosshairPreset + 1) % 10;
-        FeatherConfig.save();
-        button.setMessage(Text.of(getPresetButtonText()));
-    }
-
-    private String getColorButtonText() {
-        int color = FeatherConfig.INSTANCE.crosshairColor;
-        for (int i = 0; i < COLORS.length; i++) {
-            if (COLORS[i] == color) return "Color: " + COLOR_NAMES[i];
-        }
-        return "Color: Custom";
-    }
-
-    private void cycleColor(ButtonWidget button) {
-        int color = FeatherConfig.INSTANCE.crosshairColor;
-        int nextIndex = 0;
-        for (int i = 0; i < COLORS.length; i++) {
-            if (COLORS[i] == color) {
-                nextIndex = (i + 1) % COLORS.length;
-                break;
-            }
-        }
-        FeatherConfig.INSTANCE.crosshairColor = COLORS[nextIndex];
-        FeatherConfig.save();
-        button.setMessage(Text.of(getColorButtonText()));
-    }
+    private String getPresetText() { String[] p = {"Cross","Dot","Circle","Circle/Dot","T-Shape","X-Shape","Square","Chevron","Tri-Bar","Box/Dot"}; int i = FeatherConfig.INSTANCE.crosshairPreset; if (i < 0 || i >= p.length) i = 0; return "Style: " + p[i]; }
+    private void cyclePreset(ButtonWidget b) { FeatherConfig.INSTANCE.crosshairPreset = (FeatherConfig.INSTANCE.crosshairPreset + 1) % 10; FeatherConfig.save(); b.setMessage(Text.of(getPresetText())); }
+    private String getColorText() { int c = FeatherConfig.INSTANCE.crosshairColor; for (int i = 0; i < COLORS.length; i++) if (COLORS[i] == c) return "Color: " + COLOR_NAMES[i]; return "Color: Custom"; }
+    private void cycleColor(ButtonWidget b) { int c = FeatherConfig.INSTANCE.crosshairColor; int n = 0; for (int i = 0; i < COLORS.length; i++) if (COLORS[i] == c) { n = (i + 1) % COLORS.length; break; } FeatherConfig.INSTANCE.crosshairColor = COLORS[n]; FeatherConfig.save(); b.setMessage(Text.of(getColorText())); }
 
     @Override
     protected void init() {
-        int leftX = this.width / 2 - 95;
-        int startY = this.height / 2 - 40;
-
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Size +"), button -> adjustSize(0.5f)).dimensions(leftX, startY, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Size -"), button -> adjustSize(-0.5f)).dimensions(leftX + 100, startY, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Gap +"), button -> adjustGap(0.5f)).dimensions(leftX, startY + 25, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Gap -"), button -> adjustGap(-0.5f)).dimensions(leftX + 100, startY + 25, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Thickness +"), button -> adjustTh(0.5f)).dimensions(leftX, startY + 50, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Thickness -"), button -> adjustTh(-0.5f)).dimensions(leftX + 100, startY + 50, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of(getPresetButtonText()), button -> cyclePreset(button)).dimensions(leftX, startY + 75, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of(getColorButtonText()), button -> cycleColor(button)).dimensions(leftX + 100, startY + 75, 90, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.of("Back"), button -> {
-            if (this.client != null) this.client.setScreen(parent);
-        }).dimensions(this.width / 2 - 45, startY + 105, 90, 20).build());
+        int lx = this.width / 2 - 95, sy = this.height / 2 - 40;
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Size +"), b -> adj(0)).dimensions(lx, sy, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Size -"), b -> adj(1)).dimensions(lx + 100, sy, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Gap +"), b -> adj(2)).dimensions(lx, sy + 25, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Gap -"), b -> adj(3)).dimensions(lx + 100, sy + 25, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Thick +"), b -> adj(4)).dimensions(lx, sy + 50, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Thick -"), b -> adj(5)).dimensions(lx + 100, sy + 50, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of(getPresetText()), b -> cyclePreset(b)).dimensions(lx, sy + 75, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of(getColorText()), b -> cycleColor(b)).dimensions(lx + 100, sy + 75, 90, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.of("Back"), b -> { if (this.client != null) this.client.setScreen(parent); }).dimensions(this.width / 2 - 45, sy + 105, 90, 20).build());
     }
 
-    private void adjustSize(float val) { FeatherConfig.INSTANCE.crosshairSize = Math.max(1.0f, FeatherConfig.INSTANCE.crosshairSize + val); FeatherConfig.save(); }
-    private void adjustGap(float val) { FeatherConfig.INSTANCE.crosshairGap = Math.max(0.0f, FeatherConfig.INSTANCE.crosshairGap + val); FeatherConfig.save(); }
-    private void adjustTh(float val) { FeatherConfig.INSTANCE.crosshairThickness = Math.max(0.5f, FeatherConfig.INSTANCE.crosshairThickness + val); FeatherConfig.save(); }
+    private void adj(int t) { FeatherConfig c = FeatherConfig.INSTANCE; switch(t){case 0:c.crosshairSize=Math.max(1f,c.crosshairSize+.5f);break;case 1:c.crosshairSize=Math.max(1f,c.crosshairSize-.5f);break;case 2:c.crosshairGap=Math.max(0f,c.crosshairGap+.5f);break;case 3:c.crosshairGap=Math.max(0f,c.crosshairGap-.5f);break;case 4:c.crosshairThickness=Math.max(.5f,c.crosshairThickness+.5f);break;case 5:c.crosshairThickness=Math.max(.5f,c.crosshairThickness-.5f);break;} FeatherConfig.save(); }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fill(0, 0, this.width, this.height, 0xD016161A);
-        context.drawCenteredTextWithShadow(this.textRenderer, "CUSTOM CROSSHAIR CONFIGURATION", this.width / 2, this.height / 2 - 75, 0xFFFFFFFF);
-
+        context.fill(0, 0, this.width, this.height, 0xFF141416);
+        context.drawCenteredTextWithShadow(this.textRenderer, "CUSTOM CROSSHAIR", this.width / 2, this.height / 2 - 75, 0xFFFFFFFF);
         FeatherConfig cfg = FeatherConfig.INSTANCE;
-        String desc = String.format("Size: %.1f | Gap: %.1f | Thickness: %.1f", cfg.crosshairSize, cfg.crosshairGap, cfg.crosshairThickness);
-        context.drawCenteredTextWithShadow(this.textRenderer, desc, this.width / 2, this.height / 2 - 60, 0xFFEB4040);
+        context.drawCenteredTextWithShadow(this.textRenderer, String.format("Size: %.1f | Gap: %.1f | Thick: %.1f", cfg.crosshairSize, cfg.crosshairGap, cfg.crosshairThickness), this.width / 2, this.height / 2 - 60, 0xFFEB4040);
 
-        int cx = this.width / 2;
-        int cy = this.height / 2 - 100;
+        int cx = this.width / 2, cy = this.height / 2 - 100;
         float gap = cfg.crosshairGap, size = cfg.crosshairSize, th = cfg.crosshairThickness;
-        int color = cfg.crosshairColor;
-        int preset = cfg.crosshairPreset;
-        int t = Math.max(1, (int) th);
-        int h1 = t / 2, h2 = t / 2 + (t % 2);
+        int color = cfg.crosshairColor, preset = cfg.crosshairPreset;
+        int t = Math.max(1, (int) th), h1 = t / 2, h2 = t / 2 + (t % 2);
 
         switch (preset) {
-            case 1: context.fill(cx - h1, cy - h1, cx + h2, cy + h2, color); break;
-            case 2: case 3:
-                int radius = (int)(gap + size);
-                for (int a = 0; a < 360; a += 10) { double r = Math.toRadians(a); int px = (int)Math.round(cx+Math.cos(r)*radius); int py = (int)Math.round(cy+Math.sin(r)*radius); context.fill(px-h1,py-h1,px+h2,py+h2,color); }
-                if (preset == 3) context.fill(cx-h1,cy-h1,cx+h2,cy+h2,color);
-                break;
-            case 4:
-                context.fill((int)(cx-gap-size),cy-h1,(int)(cx-gap),cy+h2,color); context.fill((int)(cx+gap),cy-h1,(int)(cx+gap+size),cy+h2,color); context.fill(cx-h1,(int)(cy+gap),cx+h2,(int)(cy+gap+size),color); break;
-            case 5:
-                for (int i=0;i<(int)size;i++){int f=(int)(gap+i);context.fill(cx-f-h1,cy-f-h1,cx-f+h2,cy-f+h2,color);context.fill(cx+f-h1,cy-f-h1,cx+f+h2,cy-f+h2,color);context.fill(cx-f-h1,cy+f-h1,cx-f+h2,cy+f+h2,color);context.fill(cx+f-h1,cy+f-h1,cx+f+h2,cy+f+h2,color);} break;
-            case 6: case 9:
-                int rr=(int)(gap+size);context.fill(cx-rr,cy-rr-h1,cx+rr,cy-rr+h2,color);context.fill(cx-rr,cy+rr-h1,cx+rr,cy+rr+h2,color);context.fill(cx-rr-h1,cy-rr,cx-rr+h2,cy+rr,color);context.fill(cx+rr-h1,cy-rr,cx+rr+h2,cy+rr,color);
-                if(preset==9)context.fill(cx-h1,cy-h1,cx+h2,cy+h2,color); break;
-            case 7:
-                for(int i=0;i<(int)size;i++){context.fill(cx-i-h1,(int)(cy-gap+i)-h1,cx-i+h2,(int)(cy-gap+i)+h2,color);context.fill(cx+i-h1,(int)(cy-gap+i)-h1,cx+i+h2,(int)(cy-gap+i)+h2,color);} break;
-            case 8:
-                context.fill((int)(cx-gap-size),cy-h1,(int)(cx-gap),cy+h2,color);context.fill((int)(cx+gap),cy-h1,(int)(cx+gap+size),cy+h2,color);context.fill(cx-h1,(int)(cy-gap-size),cx+h2,(int)(cy-gap),color); break;
-            default:
-                context.fill((int)(cx-gap-size),cy-h1,(int)(cx-gap),cy+h2,color);context.fill((int)(cx+gap),cy-h1,(int)(cx+gap+size),cy+h2,color);context.fill(cx-h1,(int)(cy-gap-size),cx+h2,(int)(cy-gap),color);context.fill(cx-h1,(int)(cy+gap),cx+h2,(int)(cy+gap+size),color); break;
+            case 1: context.fill(cx-h1,cy-h1,cx+h2,cy+h2,color); break;
+            case 2: case 3: int rad=(int)(gap+size); for(int a=0;a<360;a+=10){double r=Math.toRadians(a);int px=(int)Math.round(cx+Math.cos(r)*rad);int py=(int)Math.round(cy+Math.sin(r)*rad);context.fill(px-h1,py-h1,px+h2,py+h2,color);} if(preset==3)context.fill(cx-h1,cy-h1,cx+h2,cy+h2,color); break;
+            case 4: context.fill((int)(cx-gap-size),cy-h1,(int)(cx-gap),cy+h2,color);context.fill((int)(cx+gap),cy-h1,(int)(cx+gap+size),cy+h2,color);context.fill(cx-h1,(int)(cy+gap),cx+h2,(int)(cy+gap+size),color); break;
+            case 5: for(int i=0;i<(int)size;i++){int f=(int)(gap+i);context.fill(cx-f-h1,cy-f-h1,cx-f+h2,cy-f+h2,color);context.fill(cx+f-h1,cy-f-h1,cx+f+h2,cy-f+h2,color);context.fill(cx-f-h1,cy+f-h1,cx-f+h2,cy+f+h2,color);context.fill(cx+f-h1,cy+f-h1,cx+f+h2,cy+f+h2,color);} break;
+            case 6: case 9: int rr=(int)(gap+size);context.fill(cx-rr,cy-rr-h1,cx+rr,cy-rr+h2,color);context.fill(cx-rr,cy+rr-h1,cx+rr,cy+rr+h2,color);context.fill(cx-rr-h1,cy-rr,cx-rr+h2,cy+rr,color);context.fill(cx+rr-h1,cy-rr,cx+rr+h2,cy+rr,color);if(preset==9)context.fill(cx-h1,cy-h1,cx+h2,cy+h2,color); break;
+            case 7: for(int i=0;i<(int)size;i++){context.fill(cx-i-h1,(int)(cy-gap+i)-h1,cx-i+h2,(int)(cy-gap+i)+h2,color);context.fill(cx+i-h1,(int)(cy-gap+i)-h1,cx+i+h2,(int)(cy-gap+i)+h2,color);} break;
+            case 8: context.fill((int)(cx-gap-size),cy-h1,(int)(cx-gap),cy+h2,color);context.fill((int)(cx+gap),cy-h1,(int)(cx+gap+size),cy+h2,color);context.fill(cx-h1,(int)(cy-gap-size),cx+h2,(int)(cy-gap),color); break;
+            default: context.fill((int)(cx-gap-size),cy-h1,(int)(cx-gap),cy+h2,color);context.fill((int)(cx+gap),cy-h1,(int)(cx+gap+size),cy+h2,color);context.fill(cx-h1,(int)(cy-gap-size),cx+h2,(int)(cy-gap),color);context.fill(cx-h1,(int)(cy+gap),cx+h2,(int)(cy+gap+size),color); break;
         }
         super.render(context, mouseX, mouseY, delta);
     }
 
-    @Override
-    public void close() { if (this.client != null) this.client.setScreen(parent); }
+    @Override public void close() { if (this.client != null) this.client.setScreen(parent); }
 }
