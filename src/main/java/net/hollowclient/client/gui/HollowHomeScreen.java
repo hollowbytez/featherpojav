@@ -19,28 +19,55 @@ import net.minecraft.client.network.ServerAddress;
 import net.minecraft.client.network.ServerInfo;
 
 import java.io.File;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class HollowHomeScreen extends Screen {
-    public static final CubeMapRenderer CUSTOM_PANORAMA = new CubeMapRenderer(Identifier.ofVanilla("textures/gui/title/background/panorama"));
-    private final RotatingCubeMapRenderer panoramaRenderer = new RotatingCubeMapRenderer(CUSTOM_PANORAMA);
+    private static final int TOTAL_FRAMES = 88;
+    private static final Identifier[] ANIMATION_FRAMES = new Identifier[TOTAL_FRAMES];
+    static {
+        for (int i = 0; i < TOTAL_FRAMES; i++) {
+            ANIMATION_FRAMES[i] = Identifier.of("hollowclient", "textures/gui/animated_menu/" + (i + 1) + ".png");
+        }
+    }
+
+    private int currentFrame = 0;
+    private long lastFrameTime = 0;
 
     private final List<MenuButton> centerButtons = new ArrayList<>();
     private final List<IconWidget> topIcons = new ArrayList<>();
     private final List<ServerShortcut> serverShortcuts = new ArrayList<>();
+    private final List<FloatingParticle> particles = new ArrayList<>();
 
     public HollowHomeScreen() {
         super(Text.of("Hollow Home Screen"));
     }
 
+    private static class FloatingParticle {
+        float x, y, speed, size, alpha;
+        FloatingParticle(float width, float height) {
+            x = (float) (Math.random() * width);
+            y = (float) (Math.random() * height);
+            speed = 0.1f + (float) (Math.random() * 0.4f);
+            size = 1.0f + (float) (Math.random() * 1.5f);
+            alpha = 0.1f + (float) (Math.random() * 0.4f);
+        }
+        void tick(float width, float height) {
+            y -= speed;
+            x += (float) Math.sin(y * 0.02) * 0.2f; // Soft horizontal sway
+            if (y < -10) {
+                y = height + 10;
+                x = (float) (Math.random() * width);
+            }
+        }
+    }
+
     private static class MenuButton {
         String label;
-        boolean isAccent;
         Runnable onClick;
-        MenuButton(String label, boolean isAccent, Runnable onClick) {
+        MenuButton(String label, Runnable onClick) {
             this.label = label;
-            this.isAccent = isAccent;
             this.onClick = onClick;
         }
     }
@@ -63,18 +90,23 @@ public class HollowHomeScreen extends Screen {
         centerButtons.clear();
         topIcons.clear();
         serverShortcuts.clear();
+        particles.clear();
 
-        // Central Buttons (Removed Cosmetics)
-        centerButtons.add(new MenuButton("Singleplayer", false, () -> { if (this.client != null) this.client.setScreen(new SelectWorldScreen(this)); }));
-        centerButtons.add(new MenuButton("Multiplayer", false, () -> { if (this.client != null) this.client.setScreen(new MultiplayerScreen(this)); }));
-        centerButtons.add(new MenuButton("Screenshots", false, () -> { 
+        for (int i = 0; i < 75; i++) {
+            particles.add(new FloatingParticle(this.width, this.height));
+        }
+
+        // Minimalist Central Buttons
+        centerButtons.add(new MenuButton("Singleplayer", () -> { if (this.client != null) this.client.setScreen(new SelectWorldScreen(this)); }));
+        centerButtons.add(new MenuButton("Multiplayer", () -> { if (this.client != null) this.client.setScreen(new MultiplayerScreen(this)); }));
+        centerButtons.add(new MenuButton("Screenshots", () -> { 
             if (this.client != null) {
                 File dir = new File(this.client.runDirectory, "screenshots");
                 if (!dir.exists()) dir.mkdirs();
                 Util.getOperatingSystem().open(dir);
             }
         }));
-        centerButtons.add(new MenuButton("Hollow Settings", true, () -> { if (this.client != null) this.client.setScreen(new HollowSettingsScreen(this)); }));
+        centerButtons.add(new MenuButton("Hollow Settings", () -> { if (this.client != null) this.client.setScreen(new HollowSettingsScreen(this)); }));
 
         // Top Right Actions
         topIcons.add(new IconWidget("⚙", () -> { if (this.client != null) this.client.setScreen(new OptionsScreen(this, this.client.options)); }));
@@ -88,157 +120,174 @@ public class HollowHomeScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Fix white hazy mask by cleaning state
+        // --- 1. Background Layer (Animated Frames) ---
+        long currentTime = Util.getMeasuringTimeMs();
+        if (currentTime - lastFrameTime > 40) { // 25 fps
+            currentFrame = (currentFrame + 1) % TOTAL_FRAMES;
+            lastFrameTime = currentTime;
+        }
+
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.disableBlend();
         
-        this.panoramaRenderer.render(context, this.width, this.height, 1.0f, delta);
+        // Stretch texture to screen bounds
+        context.drawTexture(ANIMATION_FRAMES[currentFrame], 0, 0, 0, 0, this.width, this.height, this.width, this.height);
         
+        // Soft elegant dark anime gradient (Deep Purple to Dark Red overlay)
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        // Crisp dark gradient fade overlay
-        context.fillGradient(0, 0, this.width, this.height, 0xA0000000, 0xE0000000);
+        context.fillGradient(0, 0, this.width, this.height, 0xA01A0515, 0xA02E0B16);
 
-        // --- Render Top Right Profile Box ---
-        if (this.client != null && this.client.getSession() != null) {
-            int rightX = this.width - 200;
-            int topY = 20;
-
-            // Smooth Rounded Profile Container
-            RenderUtils.drawRoundedRect(context.getMatrices(), rightX, topY, 110, 36, 6, 0xD9141416);
-            RenderUtils.drawRoundedOutline(context.getMatrices(), rightX, topY, 110, 36, 6, 1.0f, 0x30FFFFFF);
-            
-            try {
-                SkinTextures skinTextures = this.client.getSkinProvider().getSkinTextures(this.client.getGameProfile());
-                Identifier skinId = skinTextures.texture();
-                context.drawTexture(skinId, rightX + 8, topY + 6, 24, 24, 8.0f, 8.0f, 8, 8, 64, 64);
-                context.drawTexture(skinId, rightX + 8, topY + 6, 24, 24, 40.0f, 8.0f, 8, 8, 64, 64);
-            } catch (Exception ignored) {}
-
-            String username = this.client.getSession().getUsername();
-            if (username.length() > 10) username = username.substring(0, 9) + "..";
-            context.drawText(this.textRenderer, username.toUpperCase(), rightX + 40, topY + 14, 0xFFFFFFFF, false);
-
-            // Action Icons
-            int iconX = rightX + 118;
-            for (IconWidget iconBtn : topIcons) {
-                boolean hovered = mouseX >= iconX && mouseX <= iconX + 36 && mouseY >= topY && mouseY <= topY + 36;
-                RenderUtils.drawRoundedRect(context.getMatrices(), iconX, topY, 36, 36, 6, hovered ? 0xD92A2A2E : 0xD9141416);
-                RenderUtils.drawRoundedOutline(context.getMatrices(), iconX, topY, 36, 36, 6, 1.0f, hovered ? 0x80FFFFFF : 0x30FFFFFF);
-                context.drawCenteredTextWithShadow(this.textRenderer, iconBtn.icon, iconX + 18, topY + 14, 0xFFFFFFFF);
-                iconX += 42;
-            }
+        // Render soft drifting particles
+        for (FloatingParticle p : particles) {
+            p.tick(this.width, this.height);
+            int a = (int)(p.alpha * 255) << 24;
+            // Draw tiny glowing red/pink particle
+            context.fill((int)p.x, (int)p.y, (int)(p.x + p.size), (int)(p.y + p.size), a | 0x00FF3366);
         }
 
-        // --- Render Left Server Sidebar ---
-        int sideY = this.height / 2 - (serverShortcuts.size() * 50) / 2;
-        int sideX = 20;
-        for (ServerShortcut sc : serverShortcuts) {
-            boolean hov = mouseX >= sideX && mouseX <= sideX + 40 && mouseY >= sideY && mouseY <= sideY + 40;
-            RenderUtils.drawRoundedRect(context.getMatrices(), sideX, sideY, 40, 40, 20, hov ? 0xD92A2A2E : 0xD9141416);
-            RenderUtils.drawRoundedOutline(context.getMatrices(), sideX, sideY, 40, 40, 20, 1.0f, hov ? 0x80FFFFFF : 0x30FFFFFF);
-            context.drawCenteredTextWithShadow(this.textRenderer, sc.initial, sideX + 20, sideY + 16, 0xFFFFFFFF);
-            
-            // Green online dot
-            RenderUtils.drawRoundedRect(context.getMatrices(), sideX + 30, sideY + 28, 10, 10, 5, 0xFF22C55E);
-            
-            if (hov) {
-                context.drawText(this.textRenderer, sc.name, sideX + 50, sideY + 16, 0xFFFFFFFF, true);
-            }
-            sideY += 50;
-        }
-
-        // --- Render Center Custom Font Title ---
-        int centerY = this.height / 2 - 80;
+        // --- 2. Title (Anime Glow / Aberration Effect) ---
+        int centerY = this.height / 2 - 90;
         context.getMatrices().push();
-        context.getMatrices().translate(this.width / 2f, centerY - 60, 0);
-        context.getMatrices().scale(3.0f, 3.0f, 1.0f);
+        context.getMatrices().translate(this.width / 2f, centerY - 40, 0);
+        context.getMatrices().scale(2.5f, 2.5f, 1.0f);
         Text title = Text.literal("HOLLOW CLIENT").setStyle(Style.EMPTY.withFont(Identifier.of("hollowclient", "eternalo")));
         int tw = this.textRenderer.getWidth(title);
-        // Shadow pass
-        context.drawText(this.textRenderer, title, -tw / 2 + 1, 1, 0x80000000, false);
-        // Main text
-        context.drawText(this.textRenderer, title, -tw / 2, 0, 0xFFFFFFFF, false);
+        
+        // Chromatic split / glow (Pink & Red)
+        context.drawText(this.textRenderer, title, -tw / 2 + 1, 1, 0x80FF1A55, false); // Neon Pink shadow
+        context.drawText(this.textRenderer, title, -tw / 2 - 1, -1, 0x809D0022, false); // Dark Red shadow
+        context.drawText(this.textRenderer, title, -tw / 2, 0, 0xFFFFFFFF, false); // Pure white core
         context.getMatrices().pop();
 
-        // --- Render Main Center Buttons ---
-        int buttonY = centerY;
-        int buttonWidth = 200;
-        int buttonHeight = 30;
+        // --- 3. Main Center Buttons ---
+        int buttonY = centerY + 15;
+        int buttonWidth = 220;
+        int buttonHeight = 32;
         int leftX = this.width / 2 - buttonWidth / 2;
 
         for (MenuButton btn : centerButtons) {
             boolean hovered = mouseX >= leftX && mouseX <= leftX + buttonWidth && mouseY >= buttonY && mouseY <= buttonY + buttonHeight;
             
-            int bg = btn.isAccent ? (hovered ? 0xD9E53935 : 0xD9EB4040) : (hovered ? 0xD92A2A2E : 0xD9141416);
-            int border = btn.isAccent ? (hovered ? 0xFFFFCDD2 : 0xFFFF8A80) : (hovered ? 0x80FFFFFF : 0x30FFFFFF);
+            // Neon red/pink accent styling
+            int bg = hovered ? 0x80330A1A : 0x50110408;
+            int border = hovered ? 0x90FF1A55 : 0x30FFFFFF; // Pink outline on hover
             
-            RenderUtils.drawRoundedRect(context.getMatrices(), leftX, buttonY, buttonWidth, buttonHeight, 8, bg);
-            RenderUtils.drawRoundedOutline(context.getMatrices(), leftX, buttonY, buttonWidth, buttonHeight, 8, 1.5f, border);
+            RenderUtils.drawRoundedRect(context.getMatrices(), leftX, buttonY, buttonWidth, buttonHeight, 5, bg);
+            RenderUtils.drawRoundedOutline(context.getMatrices(), leftX, buttonY, buttonWidth, buttonHeight, 5, hovered ? 1.5f : 1.0f, border);
             
             int textY = buttonY + (buttonHeight - this.textRenderer.fontHeight) / 2 + 1;
-            context.drawCenteredTextWithShadow(this.textRenderer, btn.label, this.width / 2, textY, 0xFFFFFFFF);
+            int textColor = hovered ? 0xFFFF6688 : 0xFFDDDDDD; // Pink text on hover
+            context.drawCenteredTextWithShadow(this.textRenderer, btn.label, this.width / 2, textY, textColor);
             
-            buttonY += 40;
+            buttonY += 42;
         }
 
-        // Quit Game Button (Clean text only at bottom)
-        int quitY = this.height - 30;
-        boolean quitHovered = mouseX >= leftX && mouseX <= leftX + buttonWidth && mouseY >= quitY && mouseY <= quitY + 20;
-        context.drawCenteredTextWithShadow(this.textRenderer, "Quit Game", this.width / 2, quitY, quitHovered ? 0xFFFF5555 : 0xFFAAAAAA);
+        // --- 4. Quit Game Button (Bottom) ---
+        int quitY = this.height - 25;
+        boolean quitHovered = mouseX >= leftX && mouseX <= leftX + buttonWidth && mouseY >= quitY && mouseY <= quitY + 15;
+        context.drawCenteredTextWithShadow(this.textRenderer, "Quit Game", this.width / 2, quitY, quitHovered ? 0xFFFF3366 : 0xFF888888);
+
+        // --- 5. Top Right Player Info (Sleek pill) ---
+        if (this.client != null && this.client.getSession() != null) {
+            int rightX = this.width - 150;
+            int topY = 20;
+
+            RenderUtils.drawRoundedRect(context.getMatrices(), rightX, topY, 130, 32, 16, 0x60110408);
+            RenderUtils.drawRoundedOutline(context.getMatrices(), rightX, topY, 130, 32, 16, 1.0f, 0x30FFFFFF);
+            
+            try {
+                SkinTextures skinTextures = this.client.getSkinProvider().getSkinTextures(this.client.getGameProfile());
+                Identifier skinId = skinTextures.texture();
+                context.drawTexture(skinId, rightX + 4, topY + 4, 24, 24, 8.0f, 8.0f, 8, 8, 64, 64);
+                context.drawTexture(skinId, rightX + 4, topY + 4, 24, 24, 40.0f, 8.0f, 8, 8, 64, 64);
+            } catch (Exception ignored) {}
+
+            String username = this.client.getSession().getUsername();
+            if (username.length() > 12) username = username.substring(0, 11) + "..";
+            context.drawText(this.textRenderer, username, rightX + 34, topY + 12, 0xFFFFFFFF, false);
+
+            // Action Icons (Circular)
+            int iconX = rightX - 85;
+            for (IconWidget iconBtn : topIcons) {
+                boolean hovered = mouseX >= iconX && mouseX <= iconX + 32 && mouseY >= topY && mouseY <= topY + 32;
+                RenderUtils.drawRoundedRect(context.getMatrices(), iconX, topY, 32, 32, 16, hovered ? 0x80330A1A : 0x50110408);
+                RenderUtils.drawRoundedOutline(context.getMatrices(), iconX, topY, 32, 32, 16, 1.0f, hovered ? 0x90FF1A55 : 0x30FFFFFF);
+                context.drawCenteredTextWithShadow(this.textRenderer, iconBtn.icon, iconX + 16, topY + 12, hovered ? 0xFFFF6688 : 0xFFFFFFFF);
+                iconX += 40;
+            }
+        }
+
+        // --- 6. Left Sidebar Servers ---
+        int sideY = this.height / 2 - (serverShortcuts.size() * 46) / 2;
+        int sideX = 20;
+        for (ServerShortcut sc : serverShortcuts) {
+            boolean hov = mouseX >= sideX && mouseX <= sideX + 36 && mouseY >= sideY && mouseY <= sideY + 36;
+            RenderUtils.drawRoundedRect(context.getMatrices(), sideX, sideY, 36, 36, 10, hov ? 0x80330A1A : 0x50110408);
+            RenderUtils.drawRoundedOutline(context.getMatrices(), sideX, sideY, 36, 36, 10, 1.0f, hov ? 0x90FF1A55 : 0x30FFFFFF);
+            context.drawCenteredTextWithShadow(this.textRenderer, sc.initial, sideX + 18, sideY + 14, hov ? 0xFFFF6688 : 0xFFFFFFFF);
+            
+            // Pink/Red online dot instead of standard green/cyan
+            RenderUtils.drawRoundedRect(context.getMatrices(), sideX + 28, sideY + 28, 6, 6, 3, 0xFFFF1A55);
+            
+            if (hov) {
+                context.drawText(this.textRenderer, sc.name, sideX + 46, sideY + 14, 0xFFFFFFFF, true);
+            }
+            sideY += 46;
+        }
 
         super.render(context, mouseX, mouseY, delta);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Quit Button
-        int buttonWidth = 200;
+        int buttonWidth = 220;
         int leftX = this.width / 2 - buttonWidth / 2;
-        int quitY = this.height - 30;
-        if (mouseX >= leftX && mouseX <= leftX + buttonWidth && mouseY >= quitY && mouseY <= quitY + 20) {
+        
+        // Quit Button
+        int quitY = this.height - 25;
+        if (mouseX >= leftX && mouseX <= leftX + buttonWidth && mouseY >= quitY && mouseY <= quitY + 15) {
             if (this.client != null) this.client.scheduleStop();
             return true;
         }
 
         // Center Buttons
         int centerY = this.height / 2 - 80;
-        int buttonY = centerY;
+        int buttonY = centerY + 15;
         for (MenuButton btn : centerButtons) {
-            if (mouseX >= leftX && mouseX <= leftX + buttonWidth && mouseY >= buttonY && mouseY <= buttonY + 30) {
+            if (mouseX >= leftX && mouseX <= leftX + buttonWidth && mouseY >= buttonY && mouseY <= buttonY + 32) {
                 btn.onClick.run();
                 return true;
             }
-            buttonY += 40;
+            buttonY += 42;
         }
 
         // Top Right Icons
         if (this.client != null && this.client.getSession() != null) {
-            int rightX = this.width - 200;
+            int rightX = this.width - 150;
             int topY = 20;
-            int iconX = rightX + 118;
+            int iconX = rightX - 85;
             for (IconWidget iconBtn : topIcons) {
-                if (mouseX >= iconX && mouseX <= iconX + 36 && mouseY >= topY && mouseY <= topY + 36) {
+                if (mouseX >= iconX && mouseX <= iconX + 32 && mouseY >= topY && mouseY <= topY + 32) {
                     iconBtn.onClick.run();
                     return true;
                 }
-                iconX += 42;
+                iconX += 40;
             }
         }
 
         // Left Sidebar Servers
-        int sideY = this.height / 2 - (serverShortcuts.size() * 50) / 2;
+        int sideY = this.height / 2 - (serverShortcuts.size() * 46) / 2;
         int sideX = 20;
         for (ServerShortcut sc : serverShortcuts) {
-            if (mouseX >= sideX && mouseX <= sideX + 40 && mouseY >= sideY && mouseY <= sideY + 40) {
+            if (mouseX >= sideX && mouseX <= sideX + 36 && mouseY >= sideY && mouseY <= sideY + 36) {
                 ServerInfo info = new ServerInfo(sc.name, sc.ip, ServerInfo.ServerType.OTHER);
                 ConnectScreen.connect(this, this.client, ServerAddress.parse(info.address), info, false, null);
                 return true;
             }
-            sideY += 50;
+            sideY += 46;
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
     }
 }
-
