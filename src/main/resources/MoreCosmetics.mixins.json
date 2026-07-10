@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "v1_21.morecosmetics.compatibility.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "client": [
+    "MinecraftTickMixin",
+    "RenderCapeMixin",
+    "RenderEntityMixin",
+    "RenderGameOverlayMixin",
+    "RenderItemMixin",
+    "SkinOptionsMixin",
+    "SkinTexturesMixin",
+    "accessor.FeatureAccessor",
+    "accessor.RenderDispatcherAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

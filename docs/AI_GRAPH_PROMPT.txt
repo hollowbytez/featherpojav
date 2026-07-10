@@ -1,0 +1,45 @@
+================================================================================
+✦ COPY-PASTE AI PROMPT: GENERATE ARCHITECTURE GRAPH OF HOLLOWCLIENT ✦
+================================================================================
+
+Copy the block below and paste it into any advanced AI (like ChatGPT, Claude, 
+or the Mermaid Live Editor) to generate a gorgeous visual diagram of how 
+HollowClient's modules, screens, and mixins interact with each other!
+
+--------------------------------------------------------------------------------
+[START OF PROMPT]
+Act as an expert software architect and graph designer. Your task is to output a clean, highly structured, and readable Mermaid.js flowchart diagram representing the architecture of the custom Minecraft Fabric client "HollowClient". 
+
+Below is the detailed mapping of the client architecture:
+
+1. Entrypoint & Configs:
+   - HollowClient (Mod Initializer) loads HollowConfig (config.json) & HollowHudConfig (hud_config.json).
+
+2. Startup Rendering Cycle (Prevention of White Screen Flash):
+   - MinecraftClientMixin (<init>) forces window background color to Black using OpenGL.
+   - SplashOverlayMixin intercepts loading screen (SplashOverlay) rendering. It paints a solid black overlay and renders a rotating client logo (loading_logo.png) centered, using an ease-in-out rotation curve.
+
+3. Main Menu Redirection:
+   - MinecraftClientMixin (setScreen) intercepts TitleScreen initialization.
+   - Redirects to HollowHomeScreen.
+   - HollowHomeScreen plays an 88-frame loop animation background (1.png to 88.png) at 25 FPS, overlays a soft crimson-pink gradient, renders custom floating particles, draws a chromatic title, and displays buttons: Singleplayer, Multiplayer, Screenshots, Hollow Settings, and Quit Game.
+
+4. In-Game HUD:
+   - InGameHudMixin hooks into the game HUD rendering.
+   - Calls HollowHudRenderer.renderHUD() every frame.
+   - HollowHudRenderer reads active modules from HollowHudConfig and draws them (FPS, CPS, Keystrokes, Ping, Reach, Coordinates, Potion effects, TargetHUD, etc.).
+
+5. Input Controls:
+   - KeyboardMixin listens for keystrokes. Pressing Right Shift opens HollowHudEditorScreen.
+   - HollowHudEditorScreen allows users to drag-and-drop elements on screen, saving locations back into HollowHudConfig.
+   - HollowSettingsScreen allows users to toggle settings and HUD elements.
+
+Requirements for the Mermaid Output:
+- Use Mermaid.js `flowchart TD` or `flowchart LR`.
+- Color code the nodes: use dark purple/pink themes matching the client aesthetic (#1A0515, #FF1A55, #2E0B16).
+- Use subgraphs to group classes logically (e.g., "Mixins", "Screens & GUI", "Configurations", "HUD Engine").
+- Use descriptive labels on lines to show the execution/flow of data.
+
+Ensure the final output contains only valid Mermaid syntax so that it can render instantly.
+[END OF PROMPT]
+--------------------------------------------------------------------------------

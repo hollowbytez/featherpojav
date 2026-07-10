@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "hollowclient",
+	"version": "${version}",
+	"name": "HollowClient",
+	"description": "HollowClient - A premium PvP client for Minecraft 1.21.1.",
+	"authors": [
+		"HollowBytez"
+	],
+	"contact": {
+		"homepage": "https://github.com/HollowBytez/HollowClient"
+	},
+	"license": "MIT",
+	"icon": "assets/hollowclient/icon.png",
+	"entrypoints": {
+		"client": [
+			"net.hollowclient.client.HollowClient",
+			"v1_21.morecosmetics.compatibility.fabric.MoreCosmeticsFabric"
+		]
+	},
+	"mixins": [
+		{
+			"config": "hollowclient.mixins.json",
+			"environment": "client"
+		},
+		{
+			"config": "MoreCosmetics.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

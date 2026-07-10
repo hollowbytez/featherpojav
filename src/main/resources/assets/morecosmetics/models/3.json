@@ -1,0 +1,446 @@
+{
+  "name": "Hard-Hat",
+  "id": 3,
+  "category": 1,
+  "author": "plazeholder",
+  "pos": 1,
+  "version": 1,
+  "texture": "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAEcElEQVRoge2YS0srWxCFK7F9i/GFoINEHQgOHDhx6MRfLv6AjHQqRhAV38/4zOErskLZcs5JcncuXG4vaDqdXbt3rXru3aVGo9F6eHiwkZERm5yctGazaV9fX1Yul21oaMjvExMTdnV1ZXd3d/6MbKlUss/PT5cZHR21LMtsenraTk9PfT7jXMjz3Gq1/EKea2Njo2QJkL28vNjb25tfr6+v9vHx4QsNDw+7UtwhgBxgDIUABJBnHkpJwYWFBR+XESTHuEilQobiLCALybJaXAqitKw3Njbm41KKO3Pe399dFo/wHmQxALKMc4l8MgK8XJeIsCgLQQ4lsD5K84xXYojJosxjDLnz8/POAowpnGQkrmQEsBaKy2IoAaJ1ITA1NeUEyBERVKwjR16IBLkEFFbICCmVN+WArA+kmCzF/ygHRJL/ICLrah7EGJufn/8RQpKRYZIR4KWKTf2OeaAQIb61sJI1hh6QN6+vrzvhKJk4NykBFCE09FIWVvWR9VQKeZbiEOI/eULk8RZEYim1tve0Rgypf0xAZTG+HDfH5LN2MiInT+hZiazkvrm56VSamFOSk7eSEZB7Y3nTb4iwKFaNPUJEFedYHBneNT4+bpVKpUNaiscQSonS4eFhSzVcoRSVlFKq9ZGsLEyFEhGIElY0Pzr8xcWFz9Wc+G6FI+R3dnb6iqsyC7EoyivuUWRmZsYtifKUxaWlJSdAl11cXLRGo2FHR0euPBdyJycnHUUxiLp53JYIKrHIs16/yO7v7zvWjfsXFOA3d8a7hWTlLXVxJbWAnPLj8fGxfwLPz89ufSWYGo8SG+tAko1arVaz/f19n3h2duZWr9frVq1W/T/GVUKZJ8tHKISU9ABP9U1AllfVgYx+KzHzSvwJkkU5lFTPkJIqDJLLd+pe4UEZX8BCeo4Nq1tE5WKXlpHyVyzVfXlAjcxC+VTZU1UiiY+Pjz1E2KwBVSZrhw5ARltpdXclP96IuRaNwzPnkmq12jOTTGVML1fdjs2NRO4W2lrELQZ3jBHDSu9X3vWyxjcC+c4bq5HcTiXpFtroUVpR8vLy0t8hxeW1ePbAaNvb233FUaakivGYPxJaO0wIkc3NTX9GSbC1tWW3t7cdmViWAdULA4iESmrsDb0UiR8EdLLSJuzp6cmtQ6xDgFino3YLSqr2SdwPDg68IaY6A+dRqtfrLTUUa8ewFJAXZE2NxSplIemRW1tb+0aAbo0XlpeXB0Igo2zOzc35Q6wK8QgI+CKBN0Qk3iXzu1BQiA2EwOzsrCu3srLiCu3t7XXi1HL7+OiB9fV1V5iQ04lNn1u0w01R5/9KgCNl3KPHg7qFvY0SUIrFTyQorgNNHjonD4yAlBN2d3e7MheNR9tkavzq6qrPazab3zb8hF3qTykRWTzy9bJl6LZr1mq1wcUPYZ36hKTtc9wTDRLJCdDgUp97/4R0HynboAH+G5YXMnXfVC6vVCoDjfk8ytrq/ldR1gfcAgUKFChQoECBAgUK/L9gZr8ATdiMMktBny8AAAAASUVORK5CYII=",
+  "model": {
+    "format_version": "1.12.0",
+    "minecraft:geometry": [
+      {
+        "description": {
+          "identifier": "geometry.hard-hat",
+          "texture_width": 48,
+          "texture_height": 48,
+          "visible_bounds_width": 2,
+          "visible_bounds_height": 1.5,
+          "visible_bounds_offset": [
+            0,
+            0.25,
+            0
+          ]
+        },
+        "bones": [
+          {
+            "name": "Hat",
+            "pivot": [
+              -8,
+              8,
+              8
+            ],
+            "cubes": [
+              {
+                "origin": [
+                  -3.75,
+                  -0.775,
+                  -4.9
+                ],
+                "size": [
+                  1.5,
+                  2.25,
+                  10
+                ],
+                "uv": {
+                  "north": {
+                    "uv": [
+                      18,
+                      23
+                    ],
+                    "uv_size": [
+                      2,
+                      2
+                    ]
+                  },
+                  "east": {
+                    "uv": [
+                      20,
+                      6
+                    ],
+                    "uv_size": [
+                      10,
+                      2
+                    ]
+                  },
+                  "south": {
+                    "uv": [
+                      24,
+                      20
+                    ],
+                    "uv_size": [
+                      2,
+                      2
+                    ]
+                  },
+                  "west": {
+                    "uv": [
+                      20,
+                      8
+                    ],
+                    "uv_size": [
+                      10,
+                      2
+                    ]
+                  },
+                  "up": {
+                    "uv": [
+                      20,
+                      10
+                    ],
+                    "uv_size": [
+                      2,
+                      10
+                    ]
+                  },
+                  "down": {
+                    "uv": [
+                      20,
+                      30
+                    ],
+                    "uv_size": [
+                      2,
+                      -10
+                    ]
+                  }
+                }
+              },
+              {
+                "origin": [
+                  2.25,
+                  -0.775,
+                  -4.9
+                ],
+                "size": [
+                  1.5,
+                  2.25,
+                  10
+                ],
+                "uv": {
+                  "north": {
+                    "uv": [
+                      24,
+                      22
+                    ],
+                    "uv_size": [
+                      2,
+                      2
+                    ]
+                  },
+                  "east": {
+                    "uv": [
+                      0,
+                      21
+                    ],
+                    "uv_size": [
+                      10,
+                      2
+                    ]
+                  },
+                  "south": {
+                    "uv": [
+                      24,
+                      24
+                    ],
+                    "uv_size": [
+                      2,
+                      2
+                    ]
+                  },
+                  "west": {
+                    "uv": [
+                      10,
+                      21
+                    ],
+                    "uv_size": [
+                      10,
+                      2
+                    ]
+                  },
+                  "up": {
+                    "uv": [
+                      22,
+                      10
+                    ],
+                    "uv_size": [
+                      2,
+                      10
+                    ]
+                  },
+                  "down": {
+                    "uv": [
+                      22,
+                      30
+                    ],
+                    "uv_size": [
+                      2,
+                      -10
+                    ]
+                  }
+                }
+              },
+              {
+                "origin": [
+                  -0.75,
+                  -0.775,
+                  -4.9
+                ],
+                "size": [
+                  1.5,
+                  2.5,
+                  10
+                ],
+                "uv": {
+                  "north": {
+                    "uv": [
+                      14,
+                      23
+                    ],
+                    "uv_size": [
+                      2,
+                      3
+                    ]
+                  },
+                  "east": {
+                    "uv": [
+                      20,
+                      0
+                    ],
+                    "uv_size": [
+                      10,
+                      3
+                    ]
+                  },
+                  "south": {
+                    "uv": [
+                      16,
+                      23
+                    ],
+                    "uv_size": [
+                      2,
+                      3
+                    ]
+                  },
+                  "west": {
+                    "uv": [
+                      20,
+                      3
+                    ],
+                    "uv_size": [
+                      10,
+                      3
+                    ]
+                  },
+                  "up": {
+                    "uv": [
+                      0,
+                      23
+                    ],
+                    "uv_size": [
+                      2,
+                      10
+                    ]
+                  },
+                  "down": {
+                    "uv": [
+                      2,
+                      33
+                    ],
+                    "uv_size": [
+                      2,
+                      -10
+                    ]
+                  }
+                }
+              },
+              {
+                "origin": [
+                  -4.75,
+                  -1.025,
+                  -4.65
+                ],
+                "size": [
+                  9.5,
+                  2.25,
+                  9.5
+                ],
+                "uv": {
+                  "north": {
+                    "uv": [
+                      4,
+                      23
+                    ],
+                    "uv_size": [
+                      10,
+                      2
+                    ]
+                  },
+                  "east": {
+                    "uv": [
+                      24,
+                      10
+                    ],
+                    "uv_size": [
+                      10,
+                      2
+                    ]
+                  },
+                  "south": {
+                    "uv": [
+                      24,
+                      12
+                    ],
+                    "uv_size": [
+                      10,
+                      2
+                    ]
+                  },
+                  "west": {
+                    "uv": [
+                      24,
+                      14
+                    ],
+                    "uv_size": [
+                      10,
+                      2
+                    ]
+                  },
+                  "up": {
+                    "uv": [
+                      0,
+                      11
+                    ],
+                    "uv_size": [
+                      10,
+                      10
+                    ]
+                  },
+                  "down": {
+                    "uv": [
+                      10,
+                      21
+                    ],
+                    "uv_size": [
+                      10,
+                      -10
+                    ]
+                  }
+                }
+              },
+              {
+                "origin": [
+                  -5,
+                  -1.775,
+                  -5.9
+                ],
+                "size": [
+                  10,
+                  1,
+                  11
+                ],
+                "uv": {
+                  "north": {
+                    "uv": [
+                      24,
+                      18
+                    ],
+                    "uv_size": [
+                      10,
+                      1
+                    ]
+                  },
+                  "east": {
+                    "uv": [
+                      24,
+                      16
+                    ],
+                    "uv_size": [
+                      11,
+                      1
+                    ]
+                  },
+                  "south": {
+                    "uv": [
+                      24,
+                      19
+                    ],
+                    "uv_size": [
+                      10,
+                      1
+                    ]
+                  },
+                  "west": {
+                    "uv": [
+                      24,
+                      17
+                    ],
+                    "uv_size": [
+                      11,
+                      1
+                    ]
+                  },
+                  "up": {
+                    "uv": [
+                      0,
+                      0
+                    ],
+                    "uv_size": [
+                      10,
+                      11
+                    ]
+                  },
+                  "down": {
+                    "uv": [
+                      10,
+                      11
+                    ],
+                    "uv_size": [
+                      10,
+                      -11
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "models": [
+    {
+      "name": "Hat",
+      "color": -1457373,
+      "visible": true,
+      "pos": 0,
+      "scale": 1.0,
+      "x": 0.0,
+      "y": 0.02,
+      "z": 0.0,
+      "yaw": 0.0,
+      "pitch": 0.0,
+      "roll": 0.0,
+      "animations": []
+    }
+  ],
+  "height": 0.0,
+  "scale": 1.0,
+  "x": 0.0,
+  "y": 0.0,
+  "z": 0.0,
+  "yaw": 0.0,
+  "pitch": 0.0,
+  "roll": 0.0,
+  "animations": [],
+  "config": [
+    {
+      "name": "Color",
+      "key": "model.0.color",
+      "type": 3,
+      "min": 1,
+      "value": -1457373
+    }
+  ],
+  "previewY": 0.2,
+  "previewScale": 1.6
+}

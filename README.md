@@ -26,7 +26,13 @@ Hollow Client is a meticulously crafted, performance-focused Minecraft modificat
 #### ⚔️ Competitive HUD
 *   **Dynamic HUD Registry**: Over 15 built-in modules including **FPS, Ping, Keystrokes, Reach, CPS, Speed, Time, TargetHUD, and Combo**.
 *   **Interactive HUD Editor**: Press `Right Shift` to open the drag-and-drop HUD layout editor. Snap elements perfectly to your screen.
-*   **Persistent Configuration**: Every module's toggle state, X/Y coordinates, and scaling is securely saved across launches.
+*   **PUBG/BGMI-Style Dropdown Menu**: A collapsible settings panel at the top-middle (toggleable via ▲/▼ chevron tabs) to customize visibility, size scaling ($50\%$ to $300\%$), and opacity transparency ($10\%$ to $100\%$). Includes individual/global position resets and is optimized for touch controls on PojavLauncher.
+*   **Persistent Configuration**: Every module's toggle state, X/Y coordinates, scaling, and opacity is securely saved across launches.
+
+#### 🎭 Cosmetics & Accessories
+*   **High-Precision Alignment**: Corrected coordinate space alignments between Blockbench template space and vanilla Minecraft PlayerEntityModel bone pivots.
+*   **Limbs Mirroring & Slim Skins**: Full support for both standard (Steve) and slim (Alex) skin models with automated 0.5px offset adjustments on the arms, ensuring no clipping or floating.
+*   **Animated Cosmetics**: Supports dynamic items (wings, hats, shields, horns, etc.) without external account authentication.
 
 #### ⚙️ Performance & Mechanics
 *   **AutoClicker Integration**: Built-in, fully configurable randomized AutoClicker directly in the mod settings.

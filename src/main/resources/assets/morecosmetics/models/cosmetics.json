@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Cowboy Hat",
+    "id": 1,
+    "len": 8490
+  },
+  {
+    "name": "Straw Hat",
+    "id": 2,
+    "len": 14147
+  },
+  {
+    "name": "Hard-Hat",
+    "id": 3,
+    "len": 3794
+  },
+  {
+    "name": "Gas Mask",
+    "id": 4,
+    "len": 14512
+  },
+  {
+    "name": "Satellite Dish",
+    "id": 5,
+    "len": 21479
+  },
+  {
+    "name": "Headlamp",
+    "id": 6,
+    "len": 26694
+  },
+  {
+    "name": "Cow Horns",
+    "id": 7,
+    "len": 3459
+  },
+  {
+    "name": "Headphones",
+    "id": 8,
+    "len": 62547
+  },
+  {
+    "name": "Knight Shield",
+    "id": 9,
+    "len": 23717
+  },
+  {
+    "name": "Edgy Shield",
+    "id": 10,
+    "len": 21000
+  },
+  {
+    "name": "Safety Vest",
+    "id": 11,
+    "len": 12235
+  },
+  {
+    "name": "Kevler Vest",
+    "id": 12,
+    "len": 54146
+  },
+  {
+    "name": "Tactical Belt",
+    "id": 13,
+    "len": 74890
+  },
+  {
+    "name": "Quiver",
+    "id": 14,
+    "len": 42082
+  },
+  {
+    "name": "Rounded Shield",
+    "id": 15,
+    "len": 29016
+  },
+  {
+    "name": "Backpack",
+    "id": 16,
+    "len": 39022
+  },
+  {
+    "name": "Ski Goggles",
+    "id": 17,
+    "len": 15991
+  },
+  {
+    "name": "Top Hat",
+    "id": 18,
+    "len": 10880
+  },
+  {
+    "name": "Shark Fin",
+    "id": 19,
+    "len": 13593
+  },
+  {
+    "name": "Tactical Shield",
+    "id": 20,
+    "len": 31180
+  },
+  {
+    "name": "Halo",
+    "id": 21,
+    "len": 3664
+  },
+  {
+    "name": "Bunny Ears",
+    "id": 22,
+    "len": 12216
+  },
+  {
+    "name": "Dragon Wings",
+    "id": 23,
+    "len": 64611
+  },
+  {
+    "name": "Mecha Wings",
+    "id": 24,
+    "len": 33743
+  }
+]
